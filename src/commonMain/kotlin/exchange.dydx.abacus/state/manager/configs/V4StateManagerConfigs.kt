@@ -107,6 +107,14 @@ class V4StateManagerConfigs(
         return "$squidV2Host/v2/sdk-info"
     }
 
+    fun skipV1Chains(): String? {
+        return "https://api.skip.money/v1/info/chains?include_evm=true"
+    }
+
+    fun skipV1Assets(): String? {
+        return "https://api.skip.money/v1/fungible/assets?include_evm_assets=true"
+    }
+
     fun squidV2Route(): String? {
         return "$squidV2Host/v2/route"
     }

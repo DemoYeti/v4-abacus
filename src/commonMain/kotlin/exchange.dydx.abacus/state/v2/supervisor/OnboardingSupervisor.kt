@@ -22,15 +22,12 @@ import exchange.dydx.abacus.state.manager.HumanReadableSubaccountTransferPayload
 import exchange.dydx.abacus.state.manager.HumanReadableTransferPayload
 import exchange.dydx.abacus.state.manager.HumanReadableWithdrawPayload
 import exchange.dydx.abacus.state.manager.pendingCctpWithdraw
-import exchange.dydx.abacus.state.model.TradingStateMachine
-import exchange.dydx.abacus.state.model.TransferInputField
+import exchange.dydx.abacus.state.model.*
 import exchange.dydx.abacus.state.model.squidChains
 import exchange.dydx.abacus.state.model.squidRoute
 import exchange.dydx.abacus.state.model.squidRouteV2
 import exchange.dydx.abacus.state.model.squidStatus
 import exchange.dydx.abacus.state.model.squidTokens
-import exchange.dydx.abacus.state.model.squidV2SdkInfo
-import exchange.dydx.abacus.state.model.transfer
 import exchange.dydx.abacus.utils.AnalyticsUtils
 import exchange.dydx.abacus.utils.IMap
 import exchange.dydx.abacus.utils.Logger
@@ -67,6 +64,14 @@ internal class OnboardingSupervisor(
     }
 
     private fun retrieveSquidRoutes() {
+        when (configs.routerVersion) {
+            OnboardingConfigs.RouterVersion.SkipV1 -> {
+                retrieveSkipTransferChains()
+                retrieveSkipTransferAssets()
+                retrieveCctpChainIds()
+                return
+            } else -> {}
+        }
         when (configs.squidVersion) {
             OnboardingConfigs.SquidVersion.V1 -> {
                 retrieveTransferChains()
@@ -109,6 +114,29 @@ internal class OnboardingSupervisor(
             }
         }
     }
+private fun retrieveSkipTransferChains() {
+    val oldState = stateMachine.state
+    val chainsUrl = helper.configs.skipV1Chains()
+    if (chainsUrl != null) {
+        helper.get(chainsUrl, null, null) { _, response, httpCode, _ ->
+            if (helper.success(httpCode) && response != null) {
+                update(stateMachine.skipV1Chains(response), oldState)
+            }
+        }
+    }
+
+}
+    private fun retrieveSkipTransferAssets() {
+    val oldState = stateMachine.state
+    val assetsUrl = helper.configs.skipV1Assets()
+    if (assetsUrl != null) {
+        helper.get(assetsUrl, null, null) { _, response, httpCode, _ ->
+            if (helper.success(httpCode) && response != null) {
+                update(stateMachine.skipV1Assets(response), oldState)
+            }
+        }
+    }
+}
 
     private fun retrieveTransferTokens() {
         val oldState = stateMachine.state
@@ -162,7 +190,7 @@ internal class OnboardingSupervisor(
                     }
                 }
                 ExchangeConfig.exchangeList = exchanges
-                stateMachine.squidProcessor.exchangeDestinationChainId =
+                stateMachine.routingProcessor.exchangeDestinationChainId =
                     helper.configs.nobleChainId()
             }
         }
@@ -210,9 +238,10 @@ internal class OnboardingSupervisor(
     ) {
         val fromChain = state?.input?.transfer?.chain
         val fromToken = state?.input?.transfer?.token
+        val selectedChainId = state?.input?.transfer?.chain
         val fromAmount = helper.parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
             val decimals =
-                helper.parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(fromToken))
+                helper.parser.asInt(stateMachine.routingProcessor.selectedTokenDecimals(fromToken, selectedChainId))
             if (decimals != null) {
                 (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
             } else {
@@ -272,9 +301,10 @@ internal class OnboardingSupervisor(
     ) {
         val fromChain = state?.input?.transfer?.chain
         val fromToken = state?.input?.transfer?.token
+        val selectedChainId = state?.input?.transfer?.chain
         val fromAmount = helper.parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
             val decimals =
-                helper.parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(fromToken))
+                helper.parser.asInt(stateMachine.routingProcessor.selectedTokenDecimals(fromToken, selectedChainId))
             if (decimals != null) {
                 (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
             } else {

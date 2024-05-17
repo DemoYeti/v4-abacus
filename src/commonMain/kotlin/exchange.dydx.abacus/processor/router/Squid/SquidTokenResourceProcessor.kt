@@ -1,16 +1,16 @@
-package exchange.dydx.abacus.processor.squid
+package exchange.dydx.abacus.processor.router.Squid
 
 import exchange.dydx.abacus.processor.base.BaseProcessor
 import exchange.dydx.abacus.protocols.ParserProtocol
 
-internal class SquidChainResourceProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
+internal class SquidTokenResourceProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
     private val keyMap = mapOf(
         "string" to mapOf(
-            "chainName" to "chainName",
-            "rpc" to "rpc",
-            "networkName" to "networkName",
-            "chainId" to "chainId",
-            "chainIconURI" to "iconUrl",
+            "name" to "name",
+            "address" to "address",
+            "symbol" to "symbol",
+            "decimals" to "decimals",
+            "logoURI" to "iconUrl",
         ),
     )
 

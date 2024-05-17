@@ -32,7 +32,9 @@ import exchange.dydx.abacus.processor.assets.AssetsProcessor
 import exchange.dydx.abacus.processor.configs.ConfigsProcessor
 import exchange.dydx.abacus.processor.launchIncentive.LaunchIncentiveProcessor
 import exchange.dydx.abacus.processor.markets.MarketsSummaryProcessor
-import exchange.dydx.abacus.processor.squid.SquidProcessor
+import exchange.dydx.abacus.processor.router.IRouterProcessor
+import exchange.dydx.abacus.processor.router.Squid.SkipProcessor
+import exchange.dydx.abacus.processor.router.Squid.SquidProcessor
 import exchange.dydx.abacus.processor.wallet.WalletProcessor
 import exchange.dydx.abacus.protocols.LocalizerProtocol
 import exchange.dydx.abacus.protocols.ParserProtocol
@@ -80,6 +82,7 @@ open class TradingStateMachine(
     private val formatter: Formatter?,
     private val maxSubaccountNumber: Int,
     private val useParentSubaccount: Boolean,
+    private val useSkipProcessor: Boolean
 ) {
     internal val parser: ParserProtocol = Parser()
     internal val marketsProcessor = MarketsSummaryProcessor(parser)
@@ -90,7 +93,7 @@ open class TradingStateMachine(
     }
     internal val walletProcessor = WalletProcessor(parser)
     internal val configsProcessor = ConfigsProcessor(parser)
-    internal val squidProcessor = SquidProcessor(parser)
+    internal val routingProcessor = if (useSkipProcessor) SkipProcessor(parser) else SquidProcessor(parser) as IRouterProcessor
     internal val rewardsProcessor = RewardsProcessor(parser)
     internal val launchIncentiveProcessor = LaunchIncentiveProcessor(parser)
 
@@ -585,7 +588,6 @@ open class TradingStateMachine(
                 this.currentBlockAndHeight,
                 this.environment,
             )
-
             when (this.input?.get("current")) {
                 "trade" -> {
                     calculateTrade(subaccountNumber)
@@ -616,7 +618,6 @@ open class TradingStateMachine(
         val input = state?.input
 
         state = update(state, changes, tokensInfo, localizer)
-
         val realChanges = iMutableListOf<Changes>()
         for (change in changes.changes) {
             val didChange = when (change) {
@@ -702,7 +703,7 @@ open class TradingStateMachine(
         this.setMarkets(parser.asNativeMap(modified["markets"]))
         this.wallet = parser.asNativeMap(modified["wallet"])
         input?.safeSet("transfer", parser.asNativeMap(modified["transfer"]))
-
+        val assets = parser.asNativeMap(transfer?.get("depositOptions"))?.get("assets")
         this.input = input
     }
 

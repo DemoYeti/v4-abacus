@@ -43,4 +43,5 @@ interface ParserProtocol {
 
     fun decodeJsonObject(text: String?): IMap<String, Any>?
     fun decodeJsonArray(text: String?): IList<Any>?
+
 }

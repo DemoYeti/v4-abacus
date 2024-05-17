@@ -16,7 +16,7 @@ import exchange.dydx.abacus.responses.ParsingErrorType
 import exchange.dydx.abacus.responses.ParsingException
 import exchange.dydx.abacus.state.app.adaptors.V4TransactionErrors
 import exchange.dydx.abacus.state.manager.configs.V4StateManagerConfigs
-import exchange.dydx.abacus.state.model.TransferInputField
+import exchange.dydx.abacus.state.model.*
 import exchange.dydx.abacus.state.model.launchIncentivePoints
 import exchange.dydx.abacus.state.model.launchIncentiveSeasons
 import exchange.dydx.abacus.state.model.onChainAccountBalances
@@ -29,8 +29,8 @@ import exchange.dydx.abacus.state.model.onChainUserFeeTier
 import exchange.dydx.abacus.state.model.onChainUserStats
 import exchange.dydx.abacus.state.model.squidChains
 import exchange.dydx.abacus.state.model.squidTokens
-import exchange.dydx.abacus.state.model.squidV2SdkInfo
 import exchange.dydx.abacus.state.model.updateHeight
+import exchange.dydx.abacus.state.v2.supervisor.OnboardingConfigs
 import exchange.dydx.abacus.utils.CoroutineTimer
 import exchange.dydx.abacus.utils.IMap
 import exchange.dydx.abacus.utils.IOImplementations
@@ -294,6 +294,17 @@ class V4StateManagerAdaptor(
     override fun didSetReadyToConnect(readyToConnect: Boolean) {
         super.didSetReadyToConnect(readyToConnect)
         if (readyToConnect) {
+            when (appConfigs.routerVersion) {
+                AppConfigs.RouterVersion.SkipV1 -> {
+                    retrieveSkipTransferChains()
+                    retrieveSkipTransferAssets()
+                    retrieveCctpChainIds()
+                    retrieveDepositExchanges()
+                    bestEffortConnectChain()
+                    retrieveLaunchIncentiveSeasons()
+                    return
+                } else -> {}
+            }
             when (appConfigs.squidVersion) {
                 AppConfigs.SquidVersion.V1 -> {
                     retrieveTransferChains()
@@ -757,6 +768,37 @@ class V4StateManagerAdaptor(
             get(url, null, header) { _, response, httpCode, _ ->
                 if (success(httpCode) && response != null) {
                     update(stateMachine.squidV2SdkInfo(response), oldState)
+                }
+            }
+        }
+    }
+
+    private fun retrieveSkipTransferChains() {
+        val oldState = stateMachine.state
+        val chainsUrl = configs.skipV1Chains()
+        if (chainsUrl != null) {
+            get(chainsUrl, null, null) { _, response, httpCode, _ ->
+                if (success(httpCode) && response != null) {
+                    update(stateMachine.skipV1Chains(response), oldState)
+                }
+            }
+        }
+    }
+
+    private fun retrieveSkipTransferAssets() {
+        val url2 = configs.squidV2Assets()
+        val squidIntegratorId = environment.squidIntegratorId
+        if (url2 != null && squidIntegratorId != null) {
+            val header = iMapOf("x-integrator-id" to squidIntegratorId)
+            get(url2, null, header) { _, response, httpCode, _ ->
+            }
+        }
+        val oldState = stateMachine.state
+        val assetsUrl = configs.skipV1Assets()
+        if (assetsUrl != null) {
+            get(assetsUrl, null, null) { _, response, httpCode, _ ->
+                if (success(httpCode) && response != null) {
+                    update(stateMachine.skipV1Assets(response), oldState)
                 }
             }
         }

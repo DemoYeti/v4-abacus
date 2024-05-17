@@ -21,19 +21,8 @@ import exchange.dydx.abacus.state.app.helper.Formatter
 import exchange.dydx.abacus.state.app.helper.TriggerOrderToastGenerator
 import exchange.dydx.abacus.state.changes.Changes
 import exchange.dydx.abacus.state.changes.StateChanges
-import exchange.dydx.abacus.state.manager.ApiData
-import exchange.dydx.abacus.state.manager.BlockAndTime
-import exchange.dydx.abacus.state.manager.HistoricalPnlPeriod
-import exchange.dydx.abacus.state.manager.HistoricalTradingRewardsPeriod
-import exchange.dydx.abacus.state.manager.HumanReadableCancelOrderPayload
-import exchange.dydx.abacus.state.manager.HumanReadableDepositPayload
-import exchange.dydx.abacus.state.manager.HumanReadablePlaceOrderPayload
-import exchange.dydx.abacus.state.manager.HumanReadableSubaccountTransferPayload
-import exchange.dydx.abacus.state.manager.HumanReadableTriggerOrdersPayload
-import exchange.dydx.abacus.state.manager.HumanReadableWithdrawPayload
+import exchange.dydx.abacus.state.manager.*
 import exchange.dydx.abacus.state.manager.NetworkState
-import exchange.dydx.abacus.state.manager.OrderbookGrouping
-import exchange.dydx.abacus.state.manager.V4Environment
 import exchange.dydx.abacus.state.manager.configs.V4StateManagerConfigs
 import exchange.dydx.abacus.state.model.AdjustIsolatedMarginInputField
 import exchange.dydx.abacus.state.model.ClosePositionInputField
@@ -43,12 +32,11 @@ import exchange.dydx.abacus.state.model.TradingStateMachine
 import exchange.dydx.abacus.state.model.TransferInputField
 import exchange.dydx.abacus.state.model.TriggerOrdersInputField
 import exchange.dydx.abacus.state.model.tradeInMarket
+import exchange.dydx.abacus.state.v2.supervisor.*
 import exchange.dydx.abacus.state.v2.supervisor.AccountsSupervisor
-import exchange.dydx.abacus.state.v2.supervisor.AppConfigsV2
 import exchange.dydx.abacus.state.v2.supervisor.ConnectionDelegate
 import exchange.dydx.abacus.state.v2.supervisor.ConnectionsSupervisor
 import exchange.dydx.abacus.state.v2.supervisor.MarketsSupervisor
-import exchange.dydx.abacus.state.v2.supervisor.NetworkHelper
 import exchange.dydx.abacus.state.v2.supervisor.OnboardingSupervisor
 import exchange.dydx.abacus.state.v2.supervisor.SystemSupervisor
 import exchange.dydx.abacus.state.v2.supervisor.accountAddress
@@ -109,6 +97,7 @@ internal class StateManagerAdaptorV2(
         Formatter(uiImplementations.formatter),
         127,
         appConfigs.accountConfigs.subaccountConfigs.useParentSubaccount,
+        useSkipProcessor=appConfigs.onboardingConfigs.routerVersion == OnboardingConfigs.RouterVersion.SkipV1
     )
 
     internal val jsonEncoder = JsonEncoder()

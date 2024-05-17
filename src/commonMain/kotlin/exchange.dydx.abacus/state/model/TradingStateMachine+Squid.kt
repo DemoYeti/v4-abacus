@@ -2,6 +2,8 @@ package exchange.dydx.abacus.state.model
 
 import exchange.dydx.abacus.state.changes.Changes
 import exchange.dydx.abacus.state.changes.StateChanges
+import exchange.dydx.abacus.utils.Logger
+import exchange.dydx.abacus.utils.mutable
 import kollections.iListOf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -9,7 +11,7 @@ import kotlinx.serialization.json.jsonObject
 internal fun TradingStateMachine.squidChains(payload: String): StateChanges? {
     val json = parser.decodeJsonObject(payload)
     return if (json != null) {
-        input = squidProcessor.receivedChains(input, json)
+        input = routingProcessor.receivedChains(input, json)
         StateChanges(iListOf(Changes.input))
     } else {
         StateChanges.noChange
@@ -19,7 +21,7 @@ internal fun TradingStateMachine.squidChains(payload: String): StateChanges? {
 internal fun TradingStateMachine.squidTokens(payload: String): StateChanges? {
     val json = parser.decodeJsonObject(payload)
     return if (json != null) {
-        input = squidProcessor.receivedTokens(input, json)
+        input = routingProcessor.receivedTokens(input, json)
         StateChanges(iListOf(Changes.input))
     } else {
         StateChanges.noChange
@@ -29,7 +31,27 @@ internal fun TradingStateMachine.squidTokens(payload: String): StateChanges? {
 internal fun TradingStateMachine.squidV2SdkInfo(payload: String): StateChanges? {
     val json = parser.decodeJsonObject(payload)
     return if (json != null) {
-        input = squidProcessor.receivedV2SdkInfo(input, json)
+        input = routingProcessor.receivedV2SdkInfo(input, json)
+        StateChanges(iListOf(Changes.input))
+    } else {
+        StateChanges.noChange
+    }
+}
+
+internal fun TradingStateMachine.skipV1Chains(payload: String): StateChanges? {
+    val json = parser.decodeJsonObject(payload)
+    return if (json != null) {
+        input = routingProcessor.receivedChains(input, json)
+        StateChanges(iListOf(Changes.input))
+    } else {
+        StateChanges.noChange
+    }
+}
+
+internal fun TradingStateMachine.skipV1Assets(payload: String): StateChanges? {
+    val json = parser.decodeJsonObject(payload)
+    return if (json != null) {
+        input = routingProcessor.receivedTokens(input, json)
         StateChanges(iListOf(Changes.input))
     } else {
         StateChanges.noChange
@@ -43,7 +65,7 @@ internal fun TradingStateMachine.squidRoute(
 ): StateChanges? {
     val json = parser.decodeJsonObject(payload)
     return if (json != null) {
-        input = squidProcessor.receivedRoute(input, json, requestId)
+        input = routingProcessor.receivedRoute(input, json, requestId)
         StateChanges(
             iListOf(Changes.input, Changes.subaccount),
             subaccountNumbers = iListOf(subaccountNumber),
@@ -60,7 +82,7 @@ internal fun TradingStateMachine.squidRouteV2(
 ): StateChanges? {
     val json = parser.decodeJsonObject(payload)
     return if (json != null) {
-        input = squidProcessor.receivedRouteV2(input, json, requestId)
+        input = routingProcessor.receivedRouteV2(input, json, requestId)
         StateChanges(
             iListOf(Changes.input, Changes.subaccount),
             subaccountNumbers = iListOf(subaccountNumber),
@@ -75,6 +97,6 @@ internal fun TradingStateMachine.squidStatus(
     transactionId: String?
 ): StateChanges? {
     val json = Json.parseToJsonElement(payload).jsonObject.toMap()
-    transferStatuses = squidProcessor.receivedStatus(transferStatuses, json, transactionId)
+    transferStatuses = routingProcessor.receivedStatus(transferStatuses, json, transactionId)
     return StateChanges(iListOf(Changes.transferStatuses))
 }

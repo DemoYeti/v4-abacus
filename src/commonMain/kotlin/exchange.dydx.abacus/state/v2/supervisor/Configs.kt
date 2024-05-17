@@ -170,7 +170,15 @@ data class OnboardingConfigs(
         V2WithdrawalOnly,
     }
 
+    enum class RouterVersion {
+        Squid,
+        SkipV1,
+        V2DepositOnly,
+        V2WithdrawalOnly,
+    }
+
     var squidVersion: SquidVersion = SquidVersion.V1
+    var routerVersion: RouterVersion = RouterVersion.Squid
 
     companion object {
         val forApp = OnboardingConfigs(

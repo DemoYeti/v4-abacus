@@ -73,11 +73,11 @@ fun TradingStateMachine.transfer(
                             transfer.safeSet("chain", "chain")
                             transfer.safeSet("token", "usdc")
                         } else {
-                            val chainType = squidProcessor.defaultChainId()
+                            val chainType = routingProcessor.defaultChainId()
                             if (chainType != null) {
                                 updateTransferToChainType(transfer, chainType)
                             }
-                            transfer.safeSet("token", squidProcessor.defaultTokenAddress(chainType))
+                            transfer.safeSet("token", routingProcessor.defaultTokenAddress(chainType))
                         }
                     }
                     changes = StateChanges(
@@ -184,17 +184,18 @@ fun TradingStateMachine.transfer(
 }
 
 private fun TradingStateMachine.updateTransferToTokenType(transfer: MutableMap<String, Any>, token: String) {
+    val selectedChainId = transfer["chain"] as? String
     if (transfer["type"] == "TRANSFER_OUT") {
         transfer.safeSet("size.usdcSize", null)
         transfer.safeSet("size.size", null)
     } else {
         transfer.safeSet(
             "resources.tokenSymbol",
-            squidProcessor.selectedTokenSymbol(token),
+            routingProcessor.selectedTokenSymbol(token),
         )
         transfer.safeSet(
             "resources.tokenDecimals",
-            squidProcessor.selectedTokenDecimals(token),
+            routingProcessor.selectedTokenDecimals(token, selectedChainId),
         )
     }
     transfer.safeSet("route", null)
@@ -202,7 +203,7 @@ private fun TradingStateMachine.updateTransferToTokenType(transfer: MutableMap<S
 }
 
 private fun TradingStateMachine.updateTransferToChainType(transfer: MutableMap<String, Any>, chainType: String) {
-    val tokenOptions = squidProcessor.tokenOptions(chainType)
+    val tokenOptions = routingProcessor.tokenOptions(chainType)
     if (transfer["type"] != "TRANSFER_OUT") {
         transfer.safeSet(
             "depositOptions.assets",
@@ -213,14 +214,14 @@ private fun TradingStateMachine.updateTransferToChainType(transfer: MutableMap<S
             tokenOptions,
         )
         transfer.safeSet("chain", chainType)
-        transfer.safeSet("token", squidProcessor.defaultTokenAddress(chainType))
+        transfer.safeSet("token", routingProcessor.defaultTokenAddress(chainType))
         transfer.safeSet(
             "resources.chainResources",
-            squidProcessor.chainResources(chainType),
+            routingProcessor.chainResources(chainType),
         )
         transfer.safeSet(
             "resources.tokenResources",
-            squidProcessor.tokenResources(chainType),
+            routingProcessor.tokenResources(chainType),
         )
     }
     transfer.safeSet("exchange", null)
@@ -230,8 +231,8 @@ private fun TradingStateMachine.updateTransferToChainType(transfer: MutableMap<S
 }
 
 private fun TradingStateMachine.updateTransferExchangeType(transfer: MutableMap<String, Any>, exchange: String) {
-    val exchangeDestinationChainId = squidProcessor.exchangeDestinationChainId
-    val tokenOptions = squidProcessor.tokenOptions(exchangeDestinationChainId)
+    val exchangeDestinationChainId = routingProcessor.exchangeDestinationChainId
+    val tokenOptions = routingProcessor.tokenOptions(exchangeDestinationChainId)
     if (transfer["type"] != "TRANSFER_OUT") {
         transfer.safeSet(
             "depositOptions.assets",
@@ -241,10 +242,10 @@ private fun TradingStateMachine.updateTransferExchangeType(transfer: MutableMap<
             "withdrawalOptions.assets",
             tokenOptions,
         )
-        transfer.safeSet("token", squidProcessor.defaultTokenAddress(exchangeDestinationChainId))
+        transfer.safeSet("token", routingProcessor.defaultTokenAddress(exchangeDestinationChainId))
         transfer.safeSet(
             "resources.tokenResources",
-            squidProcessor.tokenResources(exchangeDestinationChainId),
+            routingProcessor.tokenResources(exchangeDestinationChainId),
         )
     }
     transfer.safeSet("exchange", exchange)
