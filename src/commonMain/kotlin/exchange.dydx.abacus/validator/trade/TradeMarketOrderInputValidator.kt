@@ -21,6 +21,7 @@ internal class TradeMarketOrderInputValidator(
     private val MARKET_ORDER_WARNING_SLIPPAGE = 0.05
 
     override fun validateTrade(
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         market: Map<String, Any>?,
         configs: Map<String, Any>?,

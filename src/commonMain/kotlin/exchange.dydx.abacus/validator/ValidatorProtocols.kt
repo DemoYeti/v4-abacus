@@ -25,6 +25,7 @@ interface ValidatorProtocol {
     fun validate(
         wallet: Map<String, Any>?,
         user: Map<String, Any>?,
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         markets: Map<String, Any>?,
         configs: Map<String, Any>?,
@@ -37,6 +38,7 @@ interface ValidatorProtocol {
 
 interface TradeValidatorProtocol {
     fun validateTrade(
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         market: Map<String, Any>?,
         configs: Map<String, Any>?,

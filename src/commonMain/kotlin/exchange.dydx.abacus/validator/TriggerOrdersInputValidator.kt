@@ -34,6 +34,7 @@ internal class TriggerOrdersInputValidator(
     override fun validate(
         wallet: Map<String, Any>?,
         user: Map<String, Any>?,
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         markets: Map<String, Any>?,
         configs: Map<String, Any>?,

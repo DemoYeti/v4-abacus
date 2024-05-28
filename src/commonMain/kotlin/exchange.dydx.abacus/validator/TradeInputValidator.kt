@@ -9,6 +9,7 @@ import exchange.dydx.abacus.utils.Numeric
 import exchange.dydx.abacus.validator.trade.TradeAccountStateValidator
 import exchange.dydx.abacus.validator.trade.TradeBracketOrdersValidator
 import exchange.dydx.abacus.validator.trade.TradeInputDataValidator
+import exchange.dydx.abacus.validator.trade.TradeIsolatedMarginValidator
 import exchange.dydx.abacus.validator.trade.TradeMarketOrderInputValidator
 import exchange.dydx.abacus.validator.trade.TradePositionStateValidator
 import exchange.dydx.abacus.validator.trade.TradeTriggerPriceValidator
@@ -26,11 +27,13 @@ internal class TradeInputValidator(
         TradeTriggerPriceValidator(localizer, formatter, parser),
         TradePositionStateValidator(localizer, formatter, parser),
         TradeAccountStateValidator(localizer, formatter, parser),
+        TradeIsolatedMarginValidator(localizer, formatter, parser),
     )
 
     override fun validate(
         wallet: Map<String, Any>?,
         user: Map<String, Any>?,
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         markets: Map<String, Any>?,
         configs: Map<String, Any>?,
@@ -61,6 +64,7 @@ internal class TradeInputValidator(
             for (validator in tradeValidators) {
                 val validatorErrors =
                     validator.validateTrade(
+                        account,
                         subaccount,
                         market,
                         configs,

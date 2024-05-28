@@ -578,6 +578,7 @@ open class TradingStateMachine(
             this.input = inputValidator.validate(
                 this.wallet,
                 this.user,
+                this.account,
                 subaccount,
                 parser.asNativeMap(this.marketsSummary?.get("markets")),
                 this.input,
@@ -1264,6 +1265,7 @@ open class TradingStateMachine(
                 this.input = inputValidator.validate(
                     this.wallet,
                     this.user,
+                    this.account,
                     subaccount,
                     parser.asNativeMap(this.marketsSummary?.get("markets")),
                     this.input,

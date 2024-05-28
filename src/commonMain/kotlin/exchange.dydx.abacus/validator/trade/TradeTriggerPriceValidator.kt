@@ -32,6 +32,7 @@ internal class TradeTriggerPriceValidator(
      */
 
     override fun validateTrade(
+        account: Map<String, Any>?,
         subaccount: Map<String, Any>?,
         market: Map<String, Any>?,
         configs: Map<String, Any>?,

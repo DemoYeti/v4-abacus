@@ -2,6 +2,8 @@ package exchange.dydx.abacus.payload.v4
 
 import exchange.dydx.abacus.responses.StateResponse
 import exchange.dydx.abacus.state.app.adaptors.AbUrl
+import exchange.dydx.abacus.state.model.TradeInputField
+import exchange.dydx.abacus.state.model.trade
 import exchange.dydx.abacus.state.model.tradeInMarket
 import exchange.dydx.abacus.tests.extensions.loadv4SubaccountsWithPositions
 import exchange.dydx.abacus.tests.extensions.log
@@ -368,6 +370,47 @@ class V4ParentSubaccountTests : V4BaseTests(true) {
                             "marginMode": "CROSS",
                             "options": {
                                 "needsMarginMode": true
+                            }
+                        }
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        test(
+            {
+                perp.tradeInMarket("AVAX-USD", 0)
+            },
+            """
+                {
+                    "input": {
+                        "current": "trade",
+                        "trade": {
+                            "marginMode": "ISOLATED",
+                            "options": {
+                                "needsMarginMode": false
+                            }
+                        }
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        perp.trade("2", TradeInputField.targetLeverage, 0)
+        perp.trade("2", TradeInputField.limitPrice, 0)
+
+        test(
+            {
+                perp.trade("20", TradeInputField.usdcSize, 0)
+            },
+            """
+                {
+                    "input": {
+                        "current": "trade",
+                        "trade": {
+                            "marginMode": "ISOLATED",
+                            "options": {
+                                "needsMarginMode": false
                             }
                         }
                     }
