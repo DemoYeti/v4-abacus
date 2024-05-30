@@ -44,8 +44,8 @@ interface IRouterProcessor {
     fun selectedTokenDecimals(tokenAddress: String?, selectedChainId: String?): String?
     fun filteredTokens(chainId: String?): List<Any>?
     fun defaultTokenAddress(chainId: String?): String?
-    fun chainResources(chainId: String?): Map<String, Any>?
-    fun tokenResources(chainId: String?): Map<String, Any>?
+    fun chainResources(chainId: String?): Map<String, TransferInputChainResource>?
+    fun tokenResources(chainId: String?): Map<String, TransferInputTokenResource>?
     fun chainOptions(): List<Any>
-    fun tokenOptions(chainId: String?): List<Any>
+    fun tokenOptions(chainId: String?): List<SelectionOption>
 }

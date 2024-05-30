@@ -32,6 +32,8 @@ import exchange.dydx.abacus.processor.assets.AssetsProcessor
 import exchange.dydx.abacus.processor.configs.ConfigsProcessor
 import exchange.dydx.abacus.processor.launchIncentive.LaunchIncentiveProcessor
 import exchange.dydx.abacus.processor.markets.MarketsSummaryProcessor
+import exchange.dydx.abacus.processor.router.IRouterProcessor
+import exchange.dydx.abacus.processor.router.skip.SkipProcessor
 import exchange.dydx.abacus.processor.router.squid.SquidProcessor
 import exchange.dydx.abacus.processor.wallet.WalletProcessor
 import exchange.dydx.abacus.protocols.LocalizerProtocol
@@ -50,6 +52,7 @@ import exchange.dydx.abacus.state.manager.BlockAndTime
 import exchange.dydx.abacus.state.manager.EnvironmentFeatureFlags
 import exchange.dydx.abacus.state.manager.TokenInfo
 import exchange.dydx.abacus.state.manager.V4Environment
+import exchange.dydx.abacus.state.v2.supervisor.OnboardingConfigs
 import exchange.dydx.abacus.utils.IList
 import exchange.dydx.abacus.utils.Logger
 import exchange.dydx.abacus.utils.Parser
@@ -81,6 +84,7 @@ open class TradingStateMachine(
     private val formatter: Formatter?,
     private val maxSubaccountNumber: Int,
     private val useParentSubaccount: Boolean,
+    private val routerVendor: OnboardingConfigs.RouterVendor,
 ) {
     internal val internalState: InternalState = InternalState()
 
@@ -93,7 +97,7 @@ open class TradingStateMachine(
     }
     internal val walletProcessor = WalletProcessor(parser)
     internal val configsProcessor = ConfigsProcessor(parser)
-    internal val squidProcessor = SquidProcessor(parser, internalState.transfer)
+    internal val routerProcessor = constructRouterProcessor()
     internal val rewardsProcessor = RewardsProcessor(parser)
     internal val launchIncentiveProcessor = LaunchIncentiveProcessor(parser)
 
@@ -256,6 +260,11 @@ open class TradingStateMachine(
             return StateResponse(state, null, errors)
         }
         return socket(url, json, subaccountNumber, height)
+    }
+
+    private fun constructRouterProcessor(): IRouterProcessor {
+        if (routerVendor == OnboardingConfigs.RouterVendor.Squid) return SquidProcessor(parser = parser, internalState = internalState.transfer)
+        return SkipProcessor(parser = parser, internalState = internalState.transfer)
     }
 
     @Throws(Exception::class)

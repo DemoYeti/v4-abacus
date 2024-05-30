@@ -67,7 +67,13 @@ internal class OnboardingSupervisor(
     }
 
     private fun retrieveSquidRoutes() {
-        retrieveTransferAssets()
+        when (configs.routerVendor) {
+            OnboardingConfigs.RouterVendor.Skip -> {
+                retrieveSkipTransferChains()
+                retrieveSkipTransferTokens()
+            }
+            OnboardingConfigs.RouterVendor.Squid -> retrieveTransferAssets()
+        }
         retrieveCctpChainIds()
     }
 
@@ -147,7 +153,7 @@ internal class OnboardingSupervisor(
                     }
                 }
                 ExchangeConfig.exchangeList = exchanges
-                stateMachine.squidProcessor.exchangeDestinationChainId =
+                stateMachine.routerProcessor.exchangeDestinationChainId =
                     helper.configs.nobleChainId()
             }
         }
@@ -160,6 +166,10 @@ internal class OnboardingSupervisor(
         subaccountNumber: Int?,
     ) {
         val isCctp = state?.input?.transfer?.isCctp ?: false
+        when (configs.routerVendor) {
+            OnboardingConfigs.RouterVendor.Skip -> null
+            OnboardingConfigs.RouterVendor.Squid -> null
+        }
         when (configs.squidVersion) {
             OnboardingConfigs.SquidVersion.V2WithdrawalOnly -> retrieveDepositRouteV1(
                 state,
@@ -197,7 +207,7 @@ internal class OnboardingSupervisor(
         val fromToken = state?.input?.transfer?.token
         val fromAmount = helper.parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
             val decimals =
-                helper.parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
+                helper.parser.asInt(stateMachine.routerProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
             if (decimals != null) {
                 (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
             } else {
@@ -259,7 +269,7 @@ internal class OnboardingSupervisor(
         val fromToken = state?.input?.transfer?.token
         val fromAmount = helper.parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
             val decimals =
-                helper.parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
+                helper.parser.asInt(stateMachine.routerProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
             if (decimals != null) {
                 (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
             } else {
@@ -514,6 +524,10 @@ internal class OnboardingSupervisor(
         val isCctp =
             CctpConfig.cctpChainIds?.any { it.isCctpEnabled(state?.input?.transfer) } ?: false
         val isExchange = state?.input?.transfer?.exchange != null
+        when (configs.routerVendor) {
+            OnboardingConfigs.RouterVendor.Squid -> null
+            OnboardingConfigs.RouterVendor.Skip -> null
+        }
         when (configs.squidVersion) {
             OnboardingConfigs.SquidVersion.V2DepositOnly -> retrieveWithdrawalRouteV1(
                 state,
