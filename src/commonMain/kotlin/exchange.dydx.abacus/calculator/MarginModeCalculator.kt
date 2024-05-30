@@ -92,8 +92,11 @@ internal object MarginModeCalculator {
         parser: ParserProtocol,
         account: Map<String, Any>?,
         subaccountNumber: Int,
-        marketId: String
+        marketId: String?
     ): Int {
+        if (marketId == null) {
+            return subaccountNumber
+        }
         val subaccounts = parser.asMap(account?.get("subaccounts")) ?: return 0
 
         var lastSubaccountNumber = subaccountNumber
