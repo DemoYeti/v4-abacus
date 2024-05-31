@@ -65,13 +65,17 @@ internal fun V4StateManagerAdaptor.retrieveDepositExchanges() {
                 }
             }
             exchangeList = exchanges
-            stateMachine.squidProcessor.exchangeDestinationChainId = configs.nobleChainId()
+            stateMachine.routerProcessor.exchangeDestinationChainId = configs.nobleChainId()
         }
     }
 }
 
 internal fun V4StateManagerAdaptor.retrieveDepositRoute(state: PerpetualState?) {
     val isCctp = state?.input?.transfer?.isCctp ?: false
+    if (appConfigs.routerVendor == AppConfigs.RouterVendor.Skip) {
+        retrieveSkipDepositRoute(state)
+        return
+    }
     when (appConfigs.squidVersion) {
         AppConfigs.SquidVersion.V2WithdrawalOnly -> retrieveDepositRouteV1(
             state,
@@ -86,7 +90,7 @@ private fun V4StateManagerAdaptor.retrieveDepositRouteV1(state: PerpetualState?)
     val fromChain = state?.input?.transfer?.chain
     val fromToken = state?.input?.transfer?.token
     val fromAmount = parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
-        val decimals = parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(fromToken))
+        val decimals = parser.asInt(stateMachine.routerProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
         if (decimals != null) {
             (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
         } else {
@@ -144,7 +148,7 @@ private fun V4StateManagerAdaptor.retrieveDepositRouteV2(state: PerpetualState?)
     val fromChain = state?.input?.transfer?.chain
     val fromToken = state?.input?.transfer?.token
     val fromAmount = parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
-        val decimals = parser.asInt(stateMachine.squidProcessor.selectedTokenDecimals(fromToken))
+        val decimals = parser.asInt(stateMachine.routerProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
         if (decimals != null) {
             (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
         } else {
@@ -190,6 +194,67 @@ private fun V4StateManagerAdaptor.retrieveDepositRouteV2(state: PerpetualState?)
         val oldState = stateMachine.state
         val header = iMapOf(
             "x-integrator-id" to squidIntegratorId,
+            "Content-Type" to "application/json",
+        )
+        post(url, header, body.toJsonPrettyPrint()) { url, response, code, headers ->
+            if (response != null) {
+                val currentFromAmount = stateMachine.state?.input?.transfer?.size?.size
+                val oldFromAmount = oldState?.input?.transfer?.size?.size
+                val requestId = parser.asString(headers?.get("x-request-id"))
+                if (currentFromAmount == oldFromAmount) {
+                    update(stateMachine.squidRouteV2(response, subaccountNumber, requestId), oldState)
+                }
+            } else {
+                Logger.e { "retrieveDepositRouteV2 error, code: $code" }
+            }
+        }
+    }
+}
+
+private fun V4StateManagerAdaptor.retrieveSkipDepositRoute(state: PerpetualState?) {
+    val fromChain = state?.input?.transfer?.chain
+    val fromToken = state?.input?.transfer?.token
+    val fromAmount = parser.asDecimal(state?.input?.transfer?.size?.size)?.let {
+        val decimals = parser.asInt(stateMachine.routerProcessor.selectedTokenDecimals(tokenAddress = fromToken, selectedChainId = fromChain))
+        if (decimals != null) {
+            (it * Numeric.decimal.TEN.pow(decimals)).toBigInteger()
+        } else {
+            null
+        }
+    }
+    val chainId = environment.dydxChainId
+    val dydxTokenDemon = environment.tokens["usdc"]?.denom
+    val fromAmountString = parser.asString(fromAmount)
+    val nobleAddress = accountAddress?.toNobleAddress()
+    val url = configs.skipV2MsgsDirect()
+    val toChain = configs.nobleChainId()
+    val toToken = configs.nobleDenom()
+    if (fromChain != null &&
+        fromToken != null &&
+        fromAmount != null && fromAmount > 0 &&
+        fromAmountString != null &&
+        nobleAddress != null &&
+        chainId != null &&
+        dydxTokenDemon != null &&
+        url != null &&
+        sourceAddress != null &&
+        toChain != null &&
+        toToken != null
+    ) {
+        val body: Map<String, Any> = mapOf(
+            "amount_in" to fromAmountString,
+            "source_asset_denom" to fromToken,
+            "source_asset_chain_id" to fromChain,
+            "dest_asset_denom" to toToken,
+            "dest_asset_chain_id" to toChain,
+            "chain_ids_to_addresses" to mapOf(
+                fromChain to sourceAddress.toString(),
+                toChain to nobleAddress,
+            ),
+            "slippage_tolerance_percent" to "1",
+        )
+        val oldState = stateMachine.state
+        val header = iMapOf(
             "Content-Type" to "application/json",
         )
         post(url, header, body.toJsonPrettyPrint()) { url, response, code, headers ->

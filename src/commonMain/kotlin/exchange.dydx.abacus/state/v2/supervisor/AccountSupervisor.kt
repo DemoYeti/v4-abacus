@@ -113,8 +113,6 @@ internal open class AccountSupervisor(
             }
         }
 
-    var cosmosWalletConnected: Boolean? = false
-
     private var sourceAddressRestriction: Restriction? = null
         set(value) {
             if (field != value) {

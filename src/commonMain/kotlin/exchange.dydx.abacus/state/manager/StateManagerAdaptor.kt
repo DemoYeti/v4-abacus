@@ -133,6 +133,7 @@ open class StateManagerAdaptor(
         Formatter(uiImplementations.formatter),
         127,
         false,
+        useSkip = appConfigs.routerVendor == AppConfigs.RouterVendor.Skip,
     )
 
     internal var indexerConfig: IndexerURIs?
@@ -194,8 +195,6 @@ open class StateManagerAdaptor(
                 didSetAccountAddress(accountAddress, oldValue)
             }
         }
-
-    var cosmosWalletConnected: Boolean? = false
 
     private var accountAddressTimer: LocalTimerProtocol? = null
         set(value) {

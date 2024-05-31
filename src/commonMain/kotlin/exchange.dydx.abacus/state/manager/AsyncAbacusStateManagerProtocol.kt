@@ -96,7 +96,6 @@ interface AsyncAbacusStateManagerSingletonProtocol {
     var sourceAddress: String?
     var subaccountNumber: Int
     var market: String?
-    var cosmosWalletConnected: Boolean?
 }
 
 @JsExport

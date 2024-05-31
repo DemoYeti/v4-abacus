@@ -208,14 +208,6 @@ internal var AccountsSupervisor.accountAddress: String?
         }
     }
 
-internal var AccountsSupervisor.cosmosWalletConnected: Boolean?
-    get() {
-        return account?.cosmosWalletConnected
-    }
-    set(value) {
-        account?.cosmosWalletConnected = value
-    }
-
 internal var AccountsSupervisor.sourceAddress: String?
     get() {
         return account?.sourceAddress

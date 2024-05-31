@@ -114,7 +114,6 @@ class AsyncAbacusStateManager(
                 value?.historicalPnlPeriod = historicalPnlPeriod
                 value?.candlesResolution = candlesResolution
                 value?.readyToConnect = readyToConnect
-                value?.cosmosWalletConnected = cosmosWalletConnected
                 field = value
             }
         }
@@ -142,14 +141,6 @@ class AsyncAbacusStateManager(
             field = value
             ioImplementations.threading?.async(ThreadingType.abacus) {
                 adaptor?.accountAddress = field
-            }
-        }
-
-    override var cosmosWalletConnected: Boolean? = false
-        set(value) {
-            field = value
-            ioImplementations.threading?.async(ThreadingType.abacus) {
-                adaptor?.cosmosWalletConnected = field
             }
         }
 

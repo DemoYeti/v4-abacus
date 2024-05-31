@@ -561,8 +561,8 @@ data class TransferInput(
                 )
 
                 val errors = parser.asString(route?.get("errors"))
-
                 val errorMessage: String? =
+//                prefer route?.get("errorMessage") and default to this
                     if (errors != null) {
                         val errorArray = parser.decodeJsonArray(errors)
                         val firstError = parser.asMap(errorArray?.first())

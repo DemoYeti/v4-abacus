@@ -32,6 +32,8 @@ import exchange.dydx.abacus.processor.assets.AssetsProcessor
 import exchange.dydx.abacus.processor.configs.ConfigsProcessor
 import exchange.dydx.abacus.processor.launchIncentive.LaunchIncentiveProcessor
 import exchange.dydx.abacus.processor.markets.MarketsSummaryProcessor
+import exchange.dydx.abacus.processor.router.IRouterProcessor
+import exchange.dydx.abacus.processor.router.skip.SkipProcessor
 import exchange.dydx.abacus.processor.router.squid.SquidProcessor
 import exchange.dydx.abacus.processor.wallet.WalletProcessor
 import exchange.dydx.abacus.protocols.LocalizerProtocol
@@ -81,6 +83,7 @@ open class TradingStateMachine(
     private val formatter: Formatter?,
     private val maxSubaccountNumber: Int,
     private val useParentSubaccount: Boolean,
+    val useSkip: Boolean,
 ) {
     internal val internalState: InternalState = InternalState()
 
@@ -93,7 +96,7 @@ open class TradingStateMachine(
     }
     internal val walletProcessor = WalletProcessor(parser)
     internal val configsProcessor = ConfigsProcessor(parser)
-    internal val squidProcessor = SquidProcessor(parser, internalState.transfer)
+    internal val routerProcessor = constructRouterProcessor()
     internal val rewardsProcessor = RewardsProcessor(parser)
     internal val launchIncentiveProcessor = LaunchIncentiveProcessor(parser)
 
@@ -256,6 +259,11 @@ open class TradingStateMachine(
             return StateResponse(state, null, errors)
         }
         return socket(url, json, subaccountNumber, height)
+    }
+
+    private fun constructRouterProcessor(): IRouterProcessor {
+        if (useSkip) return SkipProcessor(parser = parser, internalState = internalState.transfer)
+        return SquidProcessor(parser = parser, internalState = internalState.transfer)
     }
 
     @Throws(Exception::class)
@@ -912,46 +920,24 @@ open class TradingStateMachine(
             "trade" -> {
                 val trade = parser.asNativeMap(input["trade"]) ?: return null
                 val type = parser.asString(trade["type"]) ?: return null
-                val isolatedMargin = parser.asString(trade["marginMode"]) == "ISOLATED"
                 return when (type) {
                     "MARKET", "STOP_MARKET", "TAKE_PROFIT_MARKET", "TRAILING_STOP" -> {
-                        if (isolatedMargin) {
-                            listOf(
-                                ReceiptLine.ExpectedPrice.rawValue,
-                                ReceiptLine.LiquidationPrice.rawValue,
-                                ReceiptLine.PositionMargin.rawValue,
-                                ReceiptLine.PositionLeverage.rawValue,
-                                ReceiptLine.Fee.rawValue,
-                                ReceiptLine.Reward.rawValue,
-                            )
-                        } else {
-                            listOf(
-                                ReceiptLine.BuyingPower.rawValue,
-                                ReceiptLine.MarginUsage.rawValue,
-                                ReceiptLine.ExpectedPrice.rawValue,
-                                ReceiptLine.Fee.rawValue,
-                                ReceiptLine.Reward.rawValue,
-                            )
-                        }
+                        listOf(
+                            ReceiptLine.BuyingPower.rawValue,
+                            ReceiptLine.MarginUsage.rawValue,
+                            ReceiptLine.ExpectedPrice.rawValue,
+                            ReceiptLine.Fee.rawValue,
+                            ReceiptLine.Reward.rawValue,
+                        )
                     }
 
                     else -> {
-                        if (isolatedMargin) {
-                            listOf(
-                                ReceiptLine.LiquidationPrice.rawValue,
-                                ReceiptLine.PositionMargin.rawValue,
-                                ReceiptLine.PositionLeverage.rawValue,
-                                ReceiptLine.Fee.rawValue,
-                                ReceiptLine.Reward.rawValue,
-                            )
-                        } else {
-                            listOf(
-                                ReceiptLine.BuyingPower.rawValue,
-                                ReceiptLine.MarginUsage.rawValue,
-                                ReceiptLine.Fee.rawValue,
-                                ReceiptLine.Reward.rawValue,
-                            )
-                        }
+                        listOf(
+                            ReceiptLine.BuyingPower.rawValue,
+                            ReceiptLine.MarginUsage.rawValue,
+                            ReceiptLine.Fee.rawValue,
+                            ReceiptLine.Reward.rawValue,
+                        )
                     }
                 }
             }
