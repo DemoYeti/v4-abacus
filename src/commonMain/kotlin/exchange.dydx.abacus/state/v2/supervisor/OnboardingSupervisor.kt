@@ -68,7 +68,12 @@ internal class OnboardingSupervisor(
     }
 
     private fun retrieveSquidRoutes() {
-        retrieveTransferAssets()
+        if (stateMachine.useSkip) {
+            retrieveSkipTransferChains()
+            retrieveSkipTransferTokens()
+        } else {
+            retrieveTransferAssets()
+        }
         retrieveCctpChainIds()
     }
 
@@ -162,6 +167,24 @@ internal class OnboardingSupervisor(
         subaccountNumber: Int?,
     ) {
         val isCctp = state?.input?.transfer?.isCctp ?: false
+        if (stateMachine.useSkip) {
+            if (isCctp) {
+                retrieveSkipDepositRouteCCTP(
+                    state = state,
+                    accountAddress = accountAddress,
+                    sourceAddress = sourceAddress,
+                    subaccountNumber = subaccountNumber,
+                )
+            } else {
+                retrieveSkipDepositRouteNonCCTP(
+                    state = state,
+                    accountAddress = accountAddress,
+                    sourceAddress = sourceAddress,
+                    subaccountNumber = subaccountNumber,
+                )
+            }
+            return
+        }
         when (configs.squidVersion) {
             OnboardingConfigs.SquidVersion.V2WithdrawalOnly -> retrieveDepositRouteV1(
                 state,
@@ -647,6 +670,37 @@ internal class OnboardingSupervisor(
         val isCctp =
             CctpConfig.cctpChainIds?.any { it.isCctpEnabled(state?.input?.transfer) } ?: false
         val isExchange = state?.input?.transfer?.exchange != null
+        if (stateMachine.useSkip) {
+            if (isCctp) {
+                retrieveSkipWithdrawalRouteCCTP(
+                    state,
+                    decimals,
+                    gas,
+                    accountAddress,
+                    sourceAddress,
+                    subaccountNumber,
+                )
+            } else if (isExchange) {
+                retrieveSkipWithdrawalRouteExchange(
+                    state,
+                    decimals,
+                    gas,
+                    accountAddress,
+                    sourceAddress,
+                    subaccountNumber,
+                )
+            } else {
+                retrieveSkipWithdrawalRouteNonCCTP(
+                    state,
+                    decimals,
+                    gas,
+                    accountAddress,
+                    sourceAddress,
+                    subaccountNumber,
+                )
+            }
+            return
+        }
         when (configs.squidVersion) {
             OnboardingConfigs.SquidVersion.V2DepositOnly -> retrieveWithdrawalRouteV1(
                 state,

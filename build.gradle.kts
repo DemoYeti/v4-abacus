@@ -125,11 +125,16 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlin:kotlin-test-common")
                 implementation("org.jetbrains.kotlin:kotlin-test-annotations-common")
+                implementation("io.mockk:mockk-common:1.13.5")
             }
         }
         val jsMain by getting
         val jvmMain by getting
-        val jvmTest by getting
+        val jvmTest by getting {
+            dependencies {
+                implementation("io.mockk:mockk:1.13.5")
+            }
+        }
         val iosMain by creating {
             dependsOn(commonMain)
         }
