@@ -6,10 +6,12 @@ import exchange.dydx.abacus.output.ComplianceAction
 import exchange.dydx.abacus.output.ComplianceStatus
 import exchange.dydx.abacus.output.Notification
 import exchange.dydx.abacus.output.PerpetualState
+import exchange.dydx.abacus.output.PositionSide
 import exchange.dydx.abacus.output.Restriction
 import exchange.dydx.abacus.output.SubaccountOrder
 import exchange.dydx.abacus.output.TransferRecordType
 import exchange.dydx.abacus.output.UsageRestriction
+import exchange.dydx.abacus.output.input.OrderSide
 import exchange.dydx.abacus.output.input.OrderStatus
 import exchange.dydx.abacus.output.input.OrderType
 import exchange.dydx.abacus.output.input.TradeInputGoodUntil
@@ -1849,7 +1851,7 @@ open class StateManagerAdaptor(
         callback(false, V4TransactionErrors.error(null, "Not implemented"), null)
     }
 
-    internal open fun cancelOrder(orderId: String, callback: TransactionCallback) {
+    internal open fun cancelOrder(orderId: String, callback: TransactionCallback, isOrphanedTriggerOrder: Boolean = false) {
         callback(false, V4TransactionErrors.error(null, "Not implemented"), null)
     }
 
@@ -2233,11 +2235,11 @@ open class StateManagerAdaptor(
         )
     }
 
-    internal fun orderCanceled(orderId: String) {
+    internal fun orderCanceled(orderId: String, isOrphanedTriggerOrder: Boolean = false) {
         val connectedSubaccount = connectedSubaccountNumber
         if (connectedSubaccount != null) {
             ioImplementations.threading?.async(ThreadingType.abacus) {
-                val changes = stateMachine.orderCanceled(orderId, connectedSubaccount)
+                val changes = stateMachine.orderCanceled(orderId, connectedSubaccount, isOrphanedTriggerOrder)
                 if (changes.changes.size != 0) {
                     ioImplementations.threading?.async(ThreadingType.main) {
                         stateNotification?.stateChanged(
@@ -2277,6 +2279,7 @@ open class StateManagerAdaptor(
         }
         if (changes.changes.contains(Changes.subaccount)) {
             parseOrdersToMatchPlaceOrdersAndCancelOrders()
+            cancelTriggerOrdersWithClosedOrFlippedPositions()
         }
     }
 
@@ -2404,6 +2407,34 @@ open class StateManagerAdaptor(
     }
 
     internal var analyticsUtils: AnalyticsUtils = AnalyticsUtils()
+
+    private var cancelingOrphanedTriggerOrders = mutableSetOf<String>()
+
+    private fun cancelTriggerOrder(orderId: String) {
+        cancelingOrphanedTriggerOrders.add(orderId)
+        cancelOrder(orderId, { _, _, _ -> cancelingOrphanedTriggerOrders.remove(orderId) }, true)
+    }
+
+    private fun cancelTriggerOrdersWithClosedOrFlippedPositions() {
+        val subaccount = stateMachine.state?.subaccount(subaccountNumber) ?: return
+        val cancelableTriggerOrders = subaccount.orders?.filter { order ->
+            order.orderFlags == 32 && order.reduceOnly && (order.status === OrderStatus.untriggered || order.status === OrderStatus.open)
+        } ?: return
+
+        cancelableTriggerOrders.forEach { order ->
+            if (order.id !in cancelingOrphanedTriggerOrders) {
+                val marketPosition = subaccount.openPositions?.find { position -> position.id === order.marketId }
+                val hasPositionClosedOrFlipped = marketPosition?.let { position ->
+                    when (position.side.current) {
+                        PositionSide.LONG -> order.side == OrderSide.buy
+                        PositionSide.SHORT -> order.side == OrderSide.sell
+                        else -> true
+                    }
+                } ?: true
+                if (hasPositionClosedOrFlipped) cancelTriggerOrder(order.id)
+            }
+        }
+    }
 
     private fun parseOrdersToMatchPlaceOrdersAndCancelOrders() {
         if (placeOrderRecords.isNotEmpty() || cancelOrderRecords.isNotEmpty()) {

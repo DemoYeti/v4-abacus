@@ -108,6 +108,7 @@ internal class OrderProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
         "SELF_TRADE" to "APP.TRADE.SELF_TRADE",
         "UNDERCOLLATERALIZED" to "APP.TRADE.UNDERCOLLATERALIZED",
         "USER_CANCELED" to "APP.TRADE.USER_CANCELED",
+        "FRONTEND_CANCELED" to "APP.TRADE.AUTOMATICALLY_CANCELED_BY_FRONTEND",
     )
 
     private val orderKeyMap = mapOf(
@@ -305,13 +306,14 @@ internal class OrderProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
 
     internal fun canceled(
         existing: Map<String, Any>,
+        isOrphanedTriggerOrder: Boolean,
     ): Map<String, Any> {
         val modified = existing.mutable()
         if (modified["status"] !== "CANCELED" && modified["status"] !== "FILLED") {
             modified["status"] = "BEST_EFFORT_CANCELED"
         }
 
-        modified["cancelReason"] = "USER_CANCELED"
+        modified["cancelReason"] = if (isOrphanedTriggerOrder) "FRONTEND_CANCELED" else "USER_CANCELED"
         updateResource(modified)
         return modified
     }

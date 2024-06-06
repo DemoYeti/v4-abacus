@@ -65,11 +65,12 @@ internal class OrdersProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
     internal fun canceled(
         existing: Map<String, Any>,
         orderId: String,
+        isOrphanedTriggerOrder: Boolean = false,
     ): Pair<Map<String, Any>, Boolean> {
         val order = parser.asNativeMap(existing.get(orderId))
         return if (order != null) {
             val modified = existing.mutable()
-            itemProcessor.canceled(order)
+            itemProcessor.canceled(order, isOrphanedTriggerOrder)
             modified.typedSafeSet(orderId, order)
             Pair(modified, true)
         } else {

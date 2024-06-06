@@ -182,7 +182,8 @@ internal fun TradingStateMachine.receivedTransfers(
 
 internal fun TradingStateMachine.orderCanceled(
     orderId: String,
-    subaccountNumber: Int
+    subaccountNumber: Int,
+    isOrphanedTriggerOrder: Boolean = false,
 ): StateChanges {
     val wallet = wallet
     if (wallet != null) {
@@ -190,6 +191,7 @@ internal fun TradingStateMachine.orderCanceled(
             wallet,
             orderId,
             subaccountNumber,
+            isOrphanedTriggerOrder,
         )
         if (updated) {
             this.wallet = modifiedWallet

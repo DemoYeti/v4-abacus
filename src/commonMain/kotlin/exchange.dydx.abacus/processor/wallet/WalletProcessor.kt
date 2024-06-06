@@ -265,6 +265,7 @@ internal class WalletProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
         existing: Map<String, Any>,
         orderId: String,
         subaccountNumber: Int,
+        isOrphanedTriggerOrder: Boolean = false,
     ): Pair<Map<String, Any>, Boolean> {
         val account = parser.asNativeMap(existing["account"])
         if (account != null) {
@@ -272,6 +273,7 @@ internal class WalletProcessor(parser: ParserProtocol) : BaseProcessor(parser) {
                 account,
                 orderId,
                 subaccountNumber,
+                isOrphanedTriggerOrder,
             )
             if (updated) {
                 val modified = existing.mutable()

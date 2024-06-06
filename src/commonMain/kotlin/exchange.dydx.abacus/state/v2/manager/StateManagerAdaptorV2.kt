@@ -564,8 +564,8 @@ internal class StateManagerAdaptorV2(
         accounts.stopWatchingLastOrder()
     }
 
-    internal fun cancelOrder(orderId: String, callback: TransactionCallback) {
-        accounts.cancelOrder(orderId, callback)
+    internal fun cancelOrder(orderId: String, callback: TransactionCallback, isOrphanedTriggerOrder: Boolean = false) {
+        accounts.cancelOrder(orderId, callback, isOrphanedTriggerOrder)
     }
 
     internal fun orderCanceled(orderId: String) {

@@ -105,6 +105,16 @@ internal class TradePositionStateValidator(
         }
     }
 
+    private fun validationOpenPositionForTriggerOrder(
+        position: Map<String, Any>,
+        trade: Map<String, Any>,
+    ): Map<String, Any>? {
+        return when (parser.asString(trade["type"])) {
+            "STOP_LIMIT", "STOP_MARKET", "TAKE_PROFIT", "TAKE_PROFIT_MARKET" ->
+
+        }
+    }
+
     private fun validatePositionLeverage(
         position: Map<String, Any>,
         trade: Map<String, Any>,

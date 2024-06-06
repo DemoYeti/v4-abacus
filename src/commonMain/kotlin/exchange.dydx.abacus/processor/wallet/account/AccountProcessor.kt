@@ -631,10 +631,11 @@ internal open class SubaccountProcessor(parser: ParserProtocol) : BaseProcessor(
     internal fun orderCanceled(
         existing: Map<String, Any>,
         orderId: String,
+        isOrphanedTriggerOrder: Boolean = false,
     ): Pair<Map<String, Any>, Boolean> {
         val orders = parser.asNativeMap(existing["orders"])
         if (orders != null) {
-            val (modifiedOrders, updated) = ordersProcessor.canceled(orders, orderId)
+            val (modifiedOrders, updated) = ordersProcessor.canceled(orders, orderId, isOrphanedTriggerOrder)
             if (updated) {
                 val modified = existing.mutable()
                 modified.safeSet("orders", modifiedOrders)
@@ -762,6 +763,7 @@ internal class V4SubaccountsProcessor(parser: ParserProtocol) : SubaccountProces
         existing: Map<String, Any>,
         orderId: String,
         subaccountNumber: Int,
+        isOrphanedTriggerOrder: Boolean = false,
     ): Pair<Map<String, Any>, Boolean> {
         val subaccountIndex = "$subaccountNumber"
         val subaccount = parser.asNativeMap(existing[subaccountIndex])
@@ -769,6 +771,7 @@ internal class V4SubaccountsProcessor(parser: ParserProtocol) : SubaccountProces
             val (modifiedSubaccount, updated) = subaccountProcessor.orderCanceled(
                 subaccount,
                 orderId,
+                isOrphanedTriggerOrder,
             )
             if (updated) {
                 val modified = existing.mutable()
@@ -1273,11 +1276,12 @@ internal class V4AccountProcessor(parser: ParserProtocol) : BaseProcessor(parser
         existing: Map<String, Any>,
         orderId: String,
         subaccountNumber: Int,
+        isOrphanedTriggerOrder: Boolean = false
     ): Pair<Map<String, Any>, Boolean> {
         val subaccounts = parser.asNativeMap(parser.value(existing, "subaccounts"))?.mutable()
         if (subaccounts != null) {
             val (modifiedSubaccounts, updated) =
-                subaccountsProcessor.orderCanceled(subaccounts, orderId, subaccountNumber)
+                subaccountsProcessor.orderCanceled(subaccounts, orderId, subaccountNumber, isOrphanedTriggerOrder)
             if (updated) {
                 val modified = existing.mutable()
                 modified.safeSet("subaccounts", modifiedSubaccounts)

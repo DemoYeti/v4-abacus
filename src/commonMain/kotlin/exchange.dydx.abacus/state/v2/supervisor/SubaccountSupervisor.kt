@@ -605,7 +605,7 @@ internal class SubaccountSupervisor(
         payload: HumanReadablePlaceOrderPayload,
         analyticsPayload: IMap<String, Any>?,
         uiClickTimeMs: Double,
-        isTriggerOrder: Boolean = false,
+        fromSlTpDialog: Boolean = false,
         transferPayload: HumanReadableSubaccountTransferPayload? = null,
     ): HumanReadablePlaceOrderPayload {
         val clientId = payload.clientId
@@ -639,7 +639,7 @@ internal class SubaccountSupervisor(
                         subaccountNumber,
                         clientId,
                         submitTimeMs,
-                        fromSlTpDialog = isTriggerOrder,
+                        fromSlTpDialog,
                         lastOrderStatus = null,
                     ),
                 )
@@ -660,7 +660,7 @@ internal class SubaccountSupervisor(
             helper.send(
                 error,
                 callback,
-                if (isTriggerOrder) {
+                if (fromSlTpDialog) {
                     HumanReadableTriggerOrdersPayload(
                         marketId,
                         positionSize,
@@ -766,7 +766,8 @@ internal class SubaccountSupervisor(
         payload: HumanReadableCancelOrderPayload,
         analyticsPayload: IMap<String, Any>?,
         uiClickTimeMs: Double,
-        isTriggerOrder: Boolean = false,
+        fromSlTpDialog: Boolean = false,
+        isOrphanedTriggerOrder: Boolean = false,
     ): HumanReadableCancelOrderPayload {
         val clientId = payload.clientId
         val string = Json.encodeToString(payload)
@@ -789,7 +790,7 @@ internal class SubaccountSupervisor(
                             subaccountNumber,
                             clientId,
                             submitTimeMs,
-                            fromSlTpDialog = isTriggerOrder,
+                            fromSlTpDialog,
                         ),
                     )
                 }
@@ -798,7 +799,7 @@ internal class SubaccountSupervisor(
                 val error = parseTransactionResponse(response)
                 trackOrderSubmitted(error, analyticsPayload, true)
                 if (error == null) {
-                    this.orderCanceled(orderId)
+                    this.orderCanceled(orderId, isOrphanedTriggerOrder)
                 } else {
                     val cancelOrderRecord = this.cancelOrderRecords.firstOrNull {
                         it.clientId == clientId
@@ -808,7 +809,7 @@ internal class SubaccountSupervisor(
                 helper.send(
                     error,
                     callback,
-                    if (isTriggerOrder) {
+                    if (fromSlTpDialog) {
                         HumanReadableTriggerOrdersPayload(
                             marketId,
                             positionSize,
@@ -854,7 +855,7 @@ internal class SubaccountSupervisor(
         return submitPlaceOrder(callback, payload, analyticsPayload, uiClickTimeMs)
     }
 
-    internal fun cancelOrder(orderId: String, callback: TransactionCallback): HumanReadableCancelOrderPayload {
+    internal fun cancelOrder(orderId: String, callback: TransactionCallback, isOrphanedTriggerOrder: Boolean = false): HumanReadableCancelOrderPayload {
         val payload = cancelOrderPayload(orderId)
         val subaccount = stateMachine.state?.subaccount(subaccountNumber)
         val existingOrder = subaccount?.orders?.firstOrNull { it.id == orderId } ?: throw ParsingException(
@@ -862,10 +863,10 @@ internal class SubaccountSupervisor(
             "no existing order to be cancelled for $orderId",
         )
         val marketId = existingOrder.marketId
-        val analyticsPayload = analyticsUtils.cancelOrderAnalyticsPayload(payload, existingOrder, fromSlTpDialog = false)
+        val analyticsPayload = analyticsUtils.cancelOrderAnalyticsPayload(payload, existingOrder, fromSlTpDialog = false, isOrphanedTriggerOrder)
         val uiClickTimeMs = trackOrderClick(analyticsPayload, AnalyticsEvent.TradeCancelOrderClick)
 
-        return submitCancelOrder(orderId, marketId, callback, payload, analyticsPayload, uiClickTimeMs)
+        return submitCancelOrder(orderId, marketId, callback, payload, analyticsPayload, uiClickTimeMs, isOrphanedTriggerOrder)
     }
 
     internal fun commitTriggerOrders(
@@ -1230,9 +1231,9 @@ internal class SubaccountSupervisor(
         )
     }
 
-    internal fun orderCanceled(orderId: String) {
+    internal fun orderCanceled(orderId: String, isOrphanedTriggerOrder: Boolean = false) {
         helper.ioImplementations.threading?.async(ThreadingType.abacus) {
-            val changes = stateMachine.orderCanceled(orderId, subaccountNumber)
+            val changes = stateMachine.orderCanceled(orderId, subaccountNumber, isOrphanedTriggerOrder)
             if (changes.changes.size != 0) {
                 helper.ioImplementations.threading?.async(ThreadingType.main) {
                     helper.stateNotification?.stateChanged(
@@ -1409,6 +1410,7 @@ internal class SubaccountSupervisor(
         }
         if (changes.changes.contains(Changes.subaccount)) {
             parseOrdersToMatchPlaceOrdersAndCancelOrders()
+            // todo(@aforaleka) add cancel trigger orders here
         }
     }
 

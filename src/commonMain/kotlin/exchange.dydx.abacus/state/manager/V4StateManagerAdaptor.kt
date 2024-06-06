@@ -981,7 +981,7 @@ class V4StateManagerAdaptor(
         payload: HumanReadablePlaceOrderPayload,
         analyticsPayload: IMap<String, Any>?,
         uiClickTimeMs: Double,
-        isTriggerOrder: Boolean = false,
+        fromSlTpDialog: Boolean = false,
     ): HumanReadablePlaceOrderPayload {
         val clientId = payload.clientId
         val string = Json.encodeToString(payload)
@@ -1004,7 +1004,7 @@ class V4StateManagerAdaptor(
                             subaccountNumber,
                             clientId,
                             submitTimeMs,
-                            fromSlTpDialog = isTriggerOrder,
+                            fromSlTpDialog,
                             lastOrderStatus = null,
                         ),
                     )
@@ -1025,7 +1025,7 @@ class V4StateManagerAdaptor(
                 send(
                     error,
                     callback,
-                    if (isTriggerOrder) {
+                    if (fromSlTpDialog) {
                         HumanReadableTriggerOrdersPayload(
                             marketId,
                             positionSize,
@@ -1050,7 +1050,8 @@ class V4StateManagerAdaptor(
         payload: HumanReadableCancelOrderPayload,
         analyticsPayload: IMap<String, Any>?,
         uiClickTimeMs: Double,
-        isTriggerOrder: Boolean = false,
+        fromSlTpDialog: Boolean = false,
+        isOrphanedTriggerOrder: Boolean = false,
     ) {
         val clientId = payload.clientId
         val string = Json.encodeToString(payload)
@@ -1074,7 +1075,7 @@ class V4StateManagerAdaptor(
                             subaccountNumber,
                             clientId,
                             submitTimeMs,
-                            fromSlTpDialog = isTriggerOrder,
+                            fromSlTpDialog,
                         ),
                     )
                 }
@@ -1083,7 +1084,7 @@ class V4StateManagerAdaptor(
                 val error = parseTransactionResponse(response)
                 trackOrderSubmitted(error, analyticsPayload, true)
                 if (error == null) {
-                    this.orderCanceled(orderId)
+                    this.orderCanceled(orderId, isOrphanedTriggerOrder)
                 } else {
                     val cancelOrderRecord = this.cancelOrderRecords.firstOrNull {
                         it.clientId == clientId
@@ -1094,7 +1095,7 @@ class V4StateManagerAdaptor(
                 send(
                     error,
                     callback,
-                    if (isTriggerOrder) {
+                    if (fromSlTpDialog) {
                         HumanReadableTriggerOrdersPayload(
                             marketId,
                             positionSize,
@@ -1184,7 +1185,7 @@ class V4StateManagerAdaptor(
         return submitPlaceOrder(callback, payload, analyticsPayload, uiClickTimeMs)
     }
 
-    override fun cancelOrder(orderId: String, callback: TransactionCallback) {
+    override fun cancelOrder(orderId: String, callback: TransactionCallback, isOrphanedTriggerOrder: Boolean) {
         val payload = cancelOrderPayload(orderId)
         val subaccount = stateMachine.state?.subaccount(subaccountNumber)
         val existingOrder =
@@ -1197,10 +1198,11 @@ class V4StateManagerAdaptor(
             payload,
             existingOrder,
             fromSlTpDialog = false,
+            isOrphanedTriggerOrder,
         )
         val uiClickTimeMs = trackOrderClick(analyticsPayload, AnalyticsEvent.TradeCancelOrderClick)
 
-        submitCancelOrder(orderId, marketId, callback, payload, analyticsPayload, uiClickTimeMs)
+        submitCancelOrder(orderId, marketId, callback, payload, analyticsPayload, uiClickTimeMs, false, isOrphanedTriggerOrder)
     }
 
     override fun commitTriggerOrders(callback: TransactionCallback): HumanReadableTriggerOrdersPayload {
