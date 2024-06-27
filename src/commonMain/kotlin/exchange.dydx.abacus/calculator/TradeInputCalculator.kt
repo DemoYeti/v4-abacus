@@ -75,7 +75,7 @@ internal class TradeInputCalculator(
             markets,
             account,
             parser.asNativeMap(state["trade"]),
-            subaccountNumber ?: 0,
+            subaccountNumber,
         )
         val marketId = parser.asString(trade?.get("marketId"))
         val type = parser.asString(trade?.get("type"))

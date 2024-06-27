@@ -10,6 +10,8 @@ import exchange.dydx.abacus.utils.Logger
 import exchange.dydx.abacus.utils.MAX_LEVERAGE_BUFFER_PERCENT
 import exchange.dydx.abacus.utils.MAX_SUBACCOUNT_NUMBER
 import exchange.dydx.abacus.utils.NUM_PARENT_SUBACCOUNTS
+import exchange.dydx.abacus.utils.Numeric
+import exchange.dydx.abacus.utils.filterNotNull
 import kollections.iListOf
 import kotlin.math.max
 import kotlin.math.min
@@ -306,7 +308,7 @@ internal object MarginCalculator {
         subaccount: Map<String, Any>?,
         tradeInput: Map<String, Any>?,
     ): Boolean {
-        val isDecreasingPositionSize = !getIsIncreasingPositionSize(parser, subaccount, tradeInput)
+        val isDecreasingPositionSize = getIsDecreasingPositionSize(parser, subaccount, tradeInput)
         val isIsolatedMarginOrder = parser.asString(tradeInput?.get("marginMode")) == "ISOLATED"
         val hasOpenOrder = parser.asString(tradeInput?.get("marketId"))?.let { marketId ->
             findExistingOrder(parser, subaccount, marketId) != null
@@ -324,11 +326,40 @@ internal object MarginCalculator {
         return getPositionSizeDifference(parser, subaccount, tradeInput)?.let { it > 0 } ?: true
     }
 
+    private fun getIsDecreasingPositionSize(
+        parser: ParserProtocol,
+        subaccount: Map<String, Any>?,
+        tradeInput: Map<String, Any>?,
+    ): Boolean {
+        return getPositionSizeDifference(parser, subaccount, tradeInput)?.let { it < 0 } ?: false
+    }
+
     private fun getIsIncreasingPositionSize(
         subaccount: Subaccount,
         trade: TradeInput,
     ): Boolean {
         return getPositionSizeDifference(subaccount, trade)?.let { it > 0 } ?: true
+    }
+
+    private fun getTradeSizeDelta(
+        parser: ParserProtocol,
+        trade: Map<String, Any>,
+    ): Double? {
+        val marketId = parser.asString(trade["marketId"])
+        val side = parser.asString(trade["side"])
+        if (marketId != null && side != null) {
+            parser.asNativeMap(trade["summary"])?.let { summary ->
+                if (parser.asBool(summary["filled"]) == true) {
+                    val multiplier =
+                        (if (side == "BUY") Numeric.double.NEGATIVE else Numeric.double.POSITIVE)
+                    return (
+                        parser.asDouble(summary["size"])
+                            ?: Numeric.double.ZERO
+                        ) * multiplier * Numeric.double.NEGATIVE
+                }
+            }
+        }
+        return null
     }
 
     private fun getPositionSizeDifference(
@@ -339,8 +370,12 @@ internal object MarginCalculator {
         return parser.asString(tradeInput?.get("marketId"))?.let { marketId ->
             val position = parser.asNativeMap(parser.value(subaccount, "openPositions.$marketId"))
             val currentSize = parser.asDouble(parser.value(position, "size.current")) ?: 0.0
-            val postOrderSize = parser.asDouble(parser.value(position, "size.postOrder")) ?: 0.0
-            return postOrderSize.abs() - currentSize.abs()
+            // instead of using position.size.postOrder, use the size from tradeInput and imply size delta
+            // we need this estimate before the trade delta is applied to position, and position postorder size may not be updated yet
+            val tradeDelta = tradeInput?.let { getTradeSizeDelta(parser, tradeInput) } ?: 0.0
+            val estimatedPostOrderSize = currentSize + tradeDelta
+
+            return estimatedPostOrderSize.abs() - currentSize.abs()
         }
     }
 

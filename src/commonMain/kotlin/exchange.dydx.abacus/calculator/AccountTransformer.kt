@@ -19,7 +19,7 @@ class AccountTransformer() {
             MarginCalculator.getChildSubaccountNumberForIsolatedMarginTrade(
                 parser,
                 account,
-                subaccountNumber ?: 0,
+                subaccountNumber,
                 trade,
             )
         val subaccount = parser.asNativeMap(
