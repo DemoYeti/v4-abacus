@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
-    spec.name                     = 'abacus'
-    spec.version                  = '0.4.18'
+    spec.name                     = 'Abacus'
+    spec.version = '1.8.12'
     spec.homepage                 = 'https://github.com/dydxprotocol/v4-abacus'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -11,6 +11,17 @@ Pod::Spec.new do |spec|
                 
                 
                 
+    if false
+        raise "
+
+        Kotlin framework 'Abacus' doesn't exist yet, so a proper Xcode project can't be generated.
+        'pod install' should be executed after running ':generateDummyFramework' Gradle task:
+
+            ./gradlew :generateDummyFramework
+
+        Alternatively, proper pod installation is performed during Gradle sync in the IDE (if Podfile location is set)"
+    end
+                
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => '',
         'PRODUCT_MODULE_NAME' => 'Abacus',
@@ -18,7 +29,7 @@ Pod::Spec.new do |spec|
                 
     spec.script_phases = [
         {
-            :name => 'Build abacus',
+            :name => 'Build Abacus',
             :execution_position => :before_compile,
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT
