@@ -6,7 +6,7 @@ import exchange.dydx.abacus.output.input.TransferInputTokenResource
 import exchange.dydx.abacus.processor.base.BaseProcessor
 import exchange.dydx.abacus.processor.router.IRouterProcessor
 import exchange.dydx.abacus.protocols.ParserProtocol
-import exchange.dydx.abacus.state.internalstate.InternalTransferInputState
+import exchange.dydx.abacus.state.internalState.InternalTransferInputState
 import exchange.dydx.abacus.state.manager.CctpConfig.cctpChainIds
 import exchange.dydx.abacus.utils.mutable
 import exchange.dydx.abacus.utils.safeSet

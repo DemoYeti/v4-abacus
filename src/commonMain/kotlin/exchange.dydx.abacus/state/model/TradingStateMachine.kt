@@ -47,7 +47,7 @@ import exchange.dydx.abacus.state.app.adaptors.AbUrl
 import exchange.dydx.abacus.state.app.helper.Formatter
 import exchange.dydx.abacus.state.changes.Changes
 import exchange.dydx.abacus.state.changes.StateChanges
-import exchange.dydx.abacus.state.internalstate.InternalState
+import exchange.dydx.abacus.state.internalState.InternalState
 import exchange.dydx.abacus.state.manager.BlockAndTime
 import exchange.dydx.abacus.state.manager.EnvironmentFeatureFlags
 import exchange.dydx.abacus.state.manager.StatsigConfig
@@ -87,7 +87,7 @@ open class TradingStateMachine(
     private val maxSubaccountNumber: Int,
     private val useParentSubaccount: Boolean,
 ) {
-    internal val internalState: InternalState = InternalState()
+    internal var internalState: InternalState = InternalState()
 
     internal val parser: ParserProtocol = Parser()
     internal val marketsProcessor = MarketsSummaryProcessor(parser)
@@ -292,6 +292,7 @@ open class TradingStateMachine(
                         )
                     when (channel) {
                         "v3_markets", "v4_markets" -> {
+
                             changes = receivedMarkets(content, subaccountNumber)
                         }
 

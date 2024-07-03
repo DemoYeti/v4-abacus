@@ -2,6 +2,8 @@ package exchange.dydx.abacus.processor.markets
 
 import exchange.dydx.abacus.processor.base.BaseProcessor
 import exchange.dydx.abacus.protocols.ParserProtocol
+import exchange.dydx.abacus.state.internalState.InternalStatePerpetualMarket
+import exchange.dydx.abacus.state.internalState.InternalStatePerpetualMarkets
 import exchange.dydx.abacus.utils.mutable
 import exchange.dydx.abacus.utils.safeSet
 
@@ -22,6 +24,12 @@ internal class MarketsSummaryProcessor(parser: ParserProtocol, calculateSparklin
     ): Map<String, Any>? {
         val markets = marketsProcessor.subscribed(parser.asNativeMap(existing?.get("markets")), content)
         return modify(existing, markets)
+    }
+
+    internal fun testSubscribed(
+        content: Map<String, Any>
+    ): InternalStatePerpetualMarkets {
+        return marketsProcessor.testSubscribed(content)
     }
 
     @Suppress("FunctionName")
