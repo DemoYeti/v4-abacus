@@ -47,7 +47,7 @@ import exchange.dydx.abacus.state.app.adaptors.AbUrl
 import exchange.dydx.abacus.state.app.helper.Formatter
 import exchange.dydx.abacus.state.changes.Changes
 import exchange.dydx.abacus.state.changes.StateChanges
-import exchange.dydx.abacus.state.internalState.InternalState
+import exchange.dydx.abacus.state.internalstate.InternalState
 import exchange.dydx.abacus.state.manager.BlockAndTime
 import exchange.dydx.abacus.state.manager.EnvironmentFeatureFlags
 import exchange.dydx.abacus.state.manager.StatsigConfig

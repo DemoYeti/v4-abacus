@@ -1,4 +1,4 @@
-package exchange.dydx.abacus.state.internalState
+package exchange.dydx.abacus.state.internalstate
 
 import exchange.dydx.abacus.output.input.SelectionOption
 import exchange.dydx.abacus.output.input.TransferInputChainResource

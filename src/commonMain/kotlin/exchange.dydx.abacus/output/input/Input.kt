@@ -1,7 +1,7 @@
 package exchange.dydx.abacus.output.input
 
 import exchange.dydx.abacus.protocols.ParserProtocol
-import exchange.dydx.abacus.state.internalState.InternalState
+import exchange.dydx.abacus.state.internalState.Internalstate
 import exchange.dydx.abacus.state.manager.V4Environment
 import exchange.dydx.abacus.utils.IList
 import exchange.dydx.abacus.utils.Logger
@@ -42,7 +42,7 @@ data class Input(
             parser: ParserProtocol,
             data: Map<*, *>?,
             environment: V4Environment?,
-            internalState: InternalState?
+            internalState: Internalstate?
         ): Input? {
             Logger.d { "creating Input\n" }
 

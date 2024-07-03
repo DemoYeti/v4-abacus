@@ -1,10 +1,6 @@
-package exchange.dydx.abacus.state.internalState
+package exchange.dydx.abacus.state.internalstate
 
 internal data class InternalState(
     val transfer: InternalTransferInputState = InternalTransferInputState(),
-    val markets: InternalStatePerpetualMarkets = InternalStatePerpetualMarkets(),
-) {
-    fun setMarkets(markets: InternalStatePerpetualMarkets): InternalState {
-        return this.copy(markets = markets)
-    }
-}
+    val perpetualMarkets: InternalStatePerpetualMarkets = InternalStatePerpetualMarkets(),
+)

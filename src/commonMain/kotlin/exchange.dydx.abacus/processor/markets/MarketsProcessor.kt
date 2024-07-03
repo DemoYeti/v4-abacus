@@ -2,8 +2,8 @@ package exchange.dydx.abacus.processor.markets
 
 import exchange.dydx.abacus.processor.base.BaseProcessor
 import exchange.dydx.abacus.protocols.ParserProtocol
-import exchange.dydx.abacus.state.internalState.InternalStatePerpetualMarket
-import exchange.dydx.abacus.state.internalState.InternalStatePerpetualMarkets
+import exchange.dydx.abacus.state.internalstate.InternalStatePerpetualMarket
+import exchange.dydx.abacus.state.internalstate.InternalStatePerpetualMarkets
 import exchange.dydx.abacus.utils.Logger
 import exchange.dydx.abacus.utils.mutable
 import exchange.dydx.abacus.utils.safeSet
