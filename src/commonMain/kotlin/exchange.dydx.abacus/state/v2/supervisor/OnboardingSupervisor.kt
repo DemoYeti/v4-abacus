@@ -132,7 +132,11 @@ internal class OnboardingSupervisor(
                         chainIds.add(CctpChainTokenInfo(chainId, tokenAddress))
                     }
                 }
-                CctpConfig.cctpChainIds = chainIds
+//                Need to filter out base and polgyon chains from cctp based on feature flag
+                CctpConfig.cctpChainIds = chainIds.filter {
+                    if (StatsigConfig.useSkip) true
+                    else it.chainId != "137" && it.chainId != "8453"
+                }
             }
         }
     }
