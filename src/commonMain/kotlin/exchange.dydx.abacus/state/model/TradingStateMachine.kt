@@ -1255,15 +1255,16 @@ open class TradingStateMachine(
                         }
                     }
                     Account(
-                        account.balances,
-                        account.stakingBalances,
-                        account.stakingDelegations,
-                        account.unbondingDelegation,
-                        account.stakingRewards,
-                        subaccounts,
-                        groupedSubaccounts,
-                        account.tradingRewards,
-                        account.launchIncentivePoints,
+                        balances =  account.balances,
+                        stakingBalances = account.stakingBalances,
+                        stakingDelegations = account.stakingDelegations,
+                        unbondingDelegation = account.unbondingDelegation,
+                        stakingRewards = account.stakingRewards,
+                        subaccounts = subaccounts,
+                        groupedSubaccounts = groupedSubaccounts,
+                        tradingRewards = account.tradingRewards,
+                        launchIncentivePoints = account.launchIncentivePoints,
+                        vault = account.vault,
                     )
                 }
             }

@@ -43,6 +43,7 @@ data class PerpetualState(
     val restriction: UsageRestriction?,
     val launchIncentive: LaunchIncentive?,
     val compliance: Compliance?,
+    val vault: Vault?,
 ) {
     val parser: ParserProtocol
         get() = Parser()

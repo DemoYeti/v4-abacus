@@ -14,6 +14,7 @@ import exchange.dydx.abacus.utils.IMutableMap
 import exchange.dydx.abacus.utils.Logger
 import exchange.dydx.abacus.utils.Numeric
 import kollections.JsExport
+import kollections.iListOf
 import kollections.iMapOf
 import kollections.iMutableListOf
 import kollections.iMutableMapOf
@@ -34,6 +35,7 @@ data class Account(
     var groupedSubaccounts: IMap<String, Subaccount>?,
     var tradingRewards: TradingRewards?,
     val launchIncentivePoints: LaunchIncentivePoints?,
+    var vault: VaultAccount?,
 ) {
     companion object {
         internal fun create(
@@ -193,6 +195,13 @@ data class Account(
                 }
             }
 
+            val vault = VaultAccount(
+                balanceUsdc = 0.0,
+                vaultTransfers = iListOf(),
+                allTimeReturnUsdc = 0.0,
+                allTimeReturnPercent = 0.0
+            );
+
             return Account(
                 balances = balances,
                 stakingBalances = stakingBalances,
@@ -203,6 +212,7 @@ data class Account(
                 groupedSubaccounts = groupedSubaccounts,
                 tradingRewards = tradingRewards,
                 launchIncentivePoints = launchIncentivePoints,
+                vault = vault,
             )
         }
 
@@ -364,3 +374,28 @@ data class StakingRewards(
     var validators: IList<String>,
     var totalRewards: IList<AccountBalance>,
 )
+
+@JsExport
+@Serializable
+data class VaultAccount(
+    var balanceUsdc: Double,
+    var allTimeReturnUsdc: Double,
+    var allTimeReturnPercent: Double,
+    var vaultTransfers: IList<VaultTransfer>,
+)
+
+@JsExport
+@Serializable
+data class VaultTransfer(
+    var timestampMs: Double,
+    var amountUsdc: Double,
+    var type: VaultTransferType,
+    var id: String,
+)
+
+@kotlin.js.JsExport
+@Serializable
+enum class VaultTransferType {
+    WITHDRAWAL,
+    DEPOSIT;
+}
