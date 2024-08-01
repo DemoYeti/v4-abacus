@@ -37,6 +37,8 @@ enum class Changes(val rawValue: String) {
     compliance("compliance"),
 
     launchIncentive("launchIncentive"),
+
+    vault("vault"),
     ;
 
     companion object {

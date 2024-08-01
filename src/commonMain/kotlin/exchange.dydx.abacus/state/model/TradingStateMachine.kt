@@ -20,6 +20,7 @@ import exchange.dydx.abacus.output.MarketTrade
 import exchange.dydx.abacus.output.PerpetualMarketSummary
 import exchange.dydx.abacus.output.PerpetualState
 import exchange.dydx.abacus.output.TransferStatus
+import exchange.dydx.abacus.output.Vault
 import exchange.dydx.abacus.output.Wallet
 import exchange.dydx.abacus.output.account.Account
 import exchange.dydx.abacus.output.account.Subaccount
@@ -688,6 +689,7 @@ open class TradingStateMachine(
                 Changes.trackStatuses,
                 Changes.orderbook,
                 Changes.launchIncentive,
+                Changes.vault,
                 -> true
 
                 Changes.wallet -> state?.wallet != wallet
@@ -1083,6 +1085,7 @@ open class TradingStateMachine(
         var trackStatuses = state?.trackStatuses?.toIMutableMap()
         val restriction = state?.restriction
         var launchIncentive = state?.launchIncentive
+        var vault = state?.vault
         val geo = state?.compliance
 
         if (changes.changes.contains(Changes.markets)) {
@@ -1255,7 +1258,7 @@ open class TradingStateMachine(
                         }
                     }
                     Account(
-                        balances =  account.balances,
+                        balances = account.balances,
                         stakingBalances = account.stakingBalances,
                         stakingDelegations = account.stakingDelegations,
                         unbondingDelegation = account.unbondingDelegation,
@@ -1430,6 +1433,10 @@ open class TradingStateMachine(
                 }
             }
         }
+        if (changes.changes.contains(Changes.vault)) {
+            vault = Vault.create(internalState.vault)
+        }
+
         return PerpetualState(
             assets,
             marketsSummary,
@@ -1451,6 +1458,7 @@ open class TradingStateMachine(
             restriction,
             launchIncentive,
             geo,
+            vault,
         )
     }
 

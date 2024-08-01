@@ -1,9 +1,9 @@
 package exchange.dydx.abacus.output
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import exchange.dydx.abacus.responses.ParsingError
+import exchange.dydx.abacus.state.internalstate.InternalVaultState
 import exchange.dydx.abacus.utils.IList
 import kollections.JsExport
+import kollections.iListOf
 import kotlinx.serialization.Serializable
 
 @JsExport
@@ -13,7 +13,24 @@ data class Vault(
     val thirtyDayReturnPercent: Double,
     val pnlPoints: IList<VaultHistoricalPNL>,
     val positions: IList<VaultPosition>,
-)
+) {
+    companion object {
+        internal fun create(
+            internalState: InternalVaultState?,
+        ): Vault? {
+            if (internalState == null) {
+                return null;
+            }
+            val lastPosition = internalState.pnlTicks.lastOrNull()
+            return Vault(
+                totalValue = lastPosition?.equity ?: "0.0",
+                thirtyDayReturnPercent = 0.0,
+                pnlPoints = iListOf(),
+                positions = iListOf(),
+            )
+        }
+    }
+}
 
 @JsExport
 @Serializable

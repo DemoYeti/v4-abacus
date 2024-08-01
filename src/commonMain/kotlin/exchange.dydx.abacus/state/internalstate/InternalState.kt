@@ -22,6 +22,7 @@ internal data class InternalState(
     val wallet: InternalWalletState = InternalWalletState(),
     var rewardsParams: InternalRewardsParamsState? = null,
     val launchIncentive: InternalLaunchIncentiveState = InternalLaunchIncentiveState(),
+    val vault: InternalVaultState? = null,
 )
 
 internal data class InternalWalletState(
@@ -57,6 +58,8 @@ internal data class InternalAccountState(
 
     // subaccount number -> subaccount state
     var groupedSubaccounts: MutableMap<Int, InternalSubaccountState> = mutableMapOf(),
+
+    var userVault: InternalVaultAccount? = null,
 )
 
 internal data class InternalSubaccountState(
@@ -134,4 +137,55 @@ internal data class InternalRewardsParamsState(
 
 internal data class InternalLaunchIncentiveState(
     var seasons: List<LaunchIncentiveSeason>? = null,
+)
+
+internal data class InternalVaultAccount(
+    val balanceUsdc: String?,
+    val netTransfers: String?,
+    val transfers: List<InternalVaultTransfer>?,
+)
+
+enum class VaultTransferType {
+    WITHDRAW,
+    DEPOSIT;
+}
+
+internal data class InternalVaultTransfer(
+    val id: String,
+    val size: String,
+    val createdAt: String,
+    val type: VaultTransferType,
+)
+
+internal data class InternalVaultState(
+    val positions: List<InternalVaultPosition> = listOf(),
+    val pnlTicks: List<InternalVaultHistoricalPnlTick> = listOf(),
+)
+
+internal data class InternalVaultHistoricalPnlTick(
+    val equity: String,
+    val totalPnl: String,
+    val netTransfers: String,
+    val createdAt: String,
+)
+
+internal data class InternalVaultPosition(
+    val market: String,
+    val assetPosition: InternalVaultAssetPosition,
+    val perpetualPosition: InternalVaultPerpetualPosition,
+    val equity: String,
+)
+
+internal data class InternalVaultAssetPosition(
+    val side: IndexerPositionSide,
+    val size: String,
+    val assetId: String,
+)
+
+internal data class InternalVaultPerpetualPosition(
+    val market: String,
+    val side: IndexerPositionSide,
+    val size: String,
+    val createdAt: String,
+    val createdAtHeight: String,
 )

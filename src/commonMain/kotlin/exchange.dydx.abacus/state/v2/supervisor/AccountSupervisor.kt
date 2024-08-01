@@ -1047,6 +1047,7 @@ internal open class AccountSupervisor(
                 restriction,
                 state?.launchIncentive,
                 state?.compliance,
+                state?.vault,
             )
         helper.ioImplementations.threading?.async(ThreadingType.main) {
             helper.stateNotification?.stateChanged(
@@ -1087,6 +1088,7 @@ internal open class AccountSupervisor(
                     compliance.updatedAt,
                     compliance.expiresAt,
                 ),
+                state?.vault,
             )
         helper.ioImplementations.threading?.async(ThreadingType.main) {
             helper.stateNotification?.stateChanged(

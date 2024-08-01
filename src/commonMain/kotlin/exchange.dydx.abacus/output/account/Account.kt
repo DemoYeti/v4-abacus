@@ -199,7 +199,7 @@ data class Account(
                 balanceUsdc = 0.0,
                 vaultTransfers = iListOf(),
                 allTimeReturnUsdc = 0.0,
-                allTimeReturnPercent = 0.0
+                allTimeReturnPercent = 0.0,
             );
 
             return Account(

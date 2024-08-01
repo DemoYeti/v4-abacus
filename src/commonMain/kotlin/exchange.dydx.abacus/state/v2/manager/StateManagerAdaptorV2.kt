@@ -676,6 +676,7 @@ internal class StateManagerAdaptorV2(
             restriction,
             state?.launchIncentive,
             state?.compliance,
+            state?.vault,
         )
         ioImplementations.threading?.async(ThreadingType.main) {
             stateNotification?.stateChanged(
@@ -715,6 +716,7 @@ internal class StateManagerAdaptorV2(
                 state?.compliance?.updatedAt,
                 state?.compliance?.expiresAt,
             ),
+            state?.vault,
         )
         ioImplementations.threading?.async(ThreadingType.main) {
             stateNotification?.stateChanged(
