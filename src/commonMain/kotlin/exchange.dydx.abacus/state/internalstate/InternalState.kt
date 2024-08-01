@@ -1,14 +1,18 @@
 package exchange.dydx.abacus.state.internalstate
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import exchange.dydx.abacus.calculator.CalculationPeriod
 import exchange.dydx.abacus.output.Asset
 import exchange.dydx.abacus.output.LaunchIncentivePoint
 import exchange.dydx.abacus.output.LaunchIncentiveSeason
+import exchange.dydx.abacus.output.MarketTrade
+import exchange.dydx.abacus.output.account.PositionSide
 import exchange.dydx.abacus.output.account.StakingRewards
 import exchange.dydx.abacus.output.account.SubaccountFill
 import exchange.dydx.abacus.output.account.SubaccountHistoricalPNL
 import exchange.dydx.abacus.output.account.SubaccountOrder
 import exchange.dydx.abacus.output.account.SubaccountPositionResources
+import exchange.dydx.abacus.output.account.SubaccountTransfer
 import exchange.dydx.abacus.output.account.UnbondingDelegation
 import exchange.dydx.abacus.output.input.MarginMode
 import exchange.dydx.abacus.utils.NUM_PARENT_SUBACCOUNTS
@@ -23,6 +27,7 @@ internal data class InternalState(
     var rewardsParams: InternalRewardsParamsState? = null,
     val launchIncentive: InternalLaunchIncentiveState = InternalLaunchIncentiveState(),
     val vault: InternalVaultState? = null,
+    val markets: MutableMap<String, InternalMarketState> = mutableMapOf(),
 )
 
 internal data class InternalWalletState(
@@ -65,21 +70,35 @@ internal data class InternalAccountState(
 internal data class InternalSubaccountState(
     var fills: List<SubaccountFill>? = null,
     var orders: List<SubaccountOrder>? = null,
+    var transfers: List<SubaccountTransfer>? = null,
     var historicalPNLs: List<SubaccountHistoricalPNL>? = null,
     var positions: Map<String, InternalPerpetualPosition>? = null,
+    var assetPositions: Map<String, InternalAssetPositionState>? = null,
     var subaccountNumber: Int,
     var address: String? = null,
     var equity: String? = null,
     var freeCollateral: String? = null,
     var marginEnabled: Boolean? = null,
     var updatedAtHeight: String? = null,
-    var latestProcessedBlockHeight: String? = null
+    var latestProcessedBlockHeight: String? = null,
+
+    // Calculate:
+    var quoteBalance: MutableMap<CalculationPeriod, Double?> = mutableMapOf(),
+
 ) {
     val openPositions: Map<String, InternalPerpetualPosition>?
         get() {
             return positions?.filterValues { it.status == IndexerPerpetualPositionStatus.OPEN }
         }
 }
+
+internal data class InternalAssetPositionState(
+    val symbol: String? = null,
+    val side: PositionSide? = null,
+    val assetId: String? = null,
+    val size: Double? = null,
+    val subaccountNumber: Int? = null,
+)
 
 internal data class InternalPerpetualPosition(
     val market: String? = null,
@@ -188,4 +207,8 @@ internal data class InternalVaultPerpetualPosition(
     val size: String,
     val createdAt: String,
     val createdAtHeight: String,
+)
+
+internal data class InternalMarketState(
+    var trades: List<MarketTrade>? = null,
 )
