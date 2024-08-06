@@ -15,6 +15,7 @@ import indexer.codegen.IndexerFillResponseObject
 import indexer.codegen.IndexerHistoricalTradingRewardAggregation
 import indexer.codegen.IndexerPnlTicksResponseObject
 import indexer.codegen.IndexerTransferResponseObject
+import indexer.models.AccountVaultResponse
 import indexer.models.chain.OnChainAccountBalanceObject
 import indexer.models.chain.OnChainDelegationResponse
 import indexer.models.chain.OnChainStakingRewardsResponse
@@ -226,6 +227,29 @@ internal class WalletProcessor(
             v4accountProcessor.receivedUnbondingDeprecated(
                 parser.asNativeMap(existing),
                 payload as? List<Any>,
+            )
+        }
+    }
+
+    fun processUserVault(
+        existing: InternalWalletState,
+        payload: AccountVaultResponse?,
+    ): InternalWalletState {
+        existing.account = v4accountProcessor.processUserVault(
+            existing = existing.account,
+            payload = payload,
+        )
+        return existing
+    }
+
+    internal fun receivedUserVaultDeprecated(
+        existing: Map<String, Any>?,
+        payload: Map<String, Any>?,
+    ): Map<String, Any>? {
+        return receivedObject(existing, "account", payload) { existing, payload ->
+            v4accountProcessor.receivedUserVaultDeprecated(
+                parser.asNativeMap(existing),
+                payload as? Map<String, Any>,
             )
         }
     }

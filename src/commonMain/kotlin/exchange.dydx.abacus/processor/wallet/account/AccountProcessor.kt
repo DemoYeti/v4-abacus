@@ -25,6 +25,7 @@ import indexer.codegen.IndexerHistoricalBlockTradingReward
 import indexer.codegen.IndexerHistoricalTradingRewardAggregation
 import indexer.codegen.IndexerPnlTicksResponseObject
 import indexer.codegen.IndexerTransferResponseObject
+import indexer.models.AccountVaultResponse
 import indexer.models.chain.OnChainAccountBalanceObject
 import indexer.models.chain.OnChainDelegationResponse
 import indexer.models.chain.OnChainStakingRewardsResponse
@@ -180,6 +181,7 @@ internal class V4AccountProcessor(
     private val launchIncentivePointsProcessor = LaunchIncentivePointsProcessor(parser)
     private val stakingRewardsProcessor = StakingRewardsProcessor(parser)
     private val unbondingProcessor = DelegationUnbondingProcessor(parser)
+    private val userVaultProcessor = UserVaultProcessor(parser)
 
     internal fun processAccountBalances(
         existing: InternalAccountState,
@@ -252,6 +254,27 @@ internal class V4AccountProcessor(
             }
         }
         modified.safeSet("unbondingDelegation", unbondingDelegations)
+        return modified
+    }
+
+    fun processUserVault(
+        existing: InternalAccountState,
+        payload: AccountVaultResponse?,
+    ): InternalAccountState {
+        existing.userVault = userVaultProcessor.process(existing.userVault, payload)
+        return existing
+    }
+
+    internal fun receivedUserVaultDeprecated(
+        existing: Map<String, Any>?,
+        payload: Map<String, Any>?,
+    ): Map<String, Any>? {
+        if (payload == null) {
+            return existing
+        }
+        // todo
+        val modified = existing?.mutable() ?: mutableMapOf()
+        modified.safeSet("userVault", modified)
         return modified
     }
 

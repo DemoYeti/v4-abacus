@@ -10,6 +10,7 @@ import exchange.dydx.abacus.state.manager.BlockAndTime
 import exchange.dydx.abacus.utils.Logger
 import indexer.codegen.IndexerFillResponse
 import indexer.codegen.IndexerTransferResponse
+import indexer.models.AccountVaultResponse
 import indexer.models.chain.OnChainAccountBalanceObject
 import indexer.models.chain.OnChainDelegationResponse
 import indexer.models.chain.OnChainStakingRewardsResponse
@@ -354,6 +355,27 @@ internal fun TradingStateMachine.onChainStakingRewards(payload: String): StateCh
         return try {
             this.wallet = walletProcessor.receivedStakingRewardsDeprecated(wallet, response)
             return StateChanges(iListOf(Changes.accountBalances), null)
+        } catch (e: Exception) {
+            StateChanges(iListOf())
+        }
+    }
+}
+
+internal fun TradingStateMachine.onUserVault(payload: String): StateChanges {
+    if (staticTyping) {
+        val response = parser.asTypedObject<AccountVaultResponse>(payload)
+        val oldValue = internalState.wallet.account.userVault
+        walletProcessor.processUserVault(internalState.wallet, response)
+        return if (oldValue != internalState.wallet.account.userVault) {
+            StateChanges(iListOf(Changes.userVault), null)
+        } else {
+            StateChanges(iListOf())
+        }
+    } else {
+        val response = parser.decodeJsonObject(payload)
+        return try {
+            this.wallet = walletProcessor.receivedUserVaultDeprecated(wallet, response)
+            return StateChanges(iListOf(Changes.userVault), null)
         } catch (e: Exception) {
             StateChanges(iListOf())
         }

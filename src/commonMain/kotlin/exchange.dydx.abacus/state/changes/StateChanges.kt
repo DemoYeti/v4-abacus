@@ -35,6 +35,7 @@ enum class Changes(val rawValue: String) {
     input("input"),
     restriction("restriction"),
     compliance("compliance"),
+    userVault("userVault"),
 
     launchIncentive("launchIncentive"),
 

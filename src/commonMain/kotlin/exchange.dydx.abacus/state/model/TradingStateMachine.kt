@@ -696,6 +696,7 @@ open class TradingStateMachine(
                 Changes.orderbook,
                 Changes.launchIncentive,
                 Changes.vault,
+                Changes.userVault,
                 -> true
 
                 Changes.wallet -> state?.wallet != wallet

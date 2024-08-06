@@ -47,6 +47,7 @@ import exchange.dydx.abacus.state.model.onChainStakingRewards
 import exchange.dydx.abacus.state.model.onChainUnbonding
 import exchange.dydx.abacus.state.model.onChainUserFeeTier
 import exchange.dydx.abacus.state.model.onChainUserStats
+import exchange.dydx.abacus.state.model.onUserVault
 import exchange.dydx.abacus.utils.AnalyticsUtils
 import exchange.dydx.abacus.utils.CoroutineTimer
 import exchange.dydx.abacus.utils.IMap
@@ -85,6 +86,15 @@ internal open class AccountSupervisor(
 
     private val nobleBalancePollingDuration = 10.0
     private var nobleBalancesTimer: LocalTimerProtocol? = null
+        set(value) {
+            if (field !== value) {
+                field?.cancel()
+                field = value
+            }
+        }
+
+    private val userVaultPollingDuration = 60.0
+    private var userVaultTimer: LocalTimerProtocol? = null
         set(value) {
             if (field !== value) {
                 field?.cancel()
@@ -315,6 +325,9 @@ internal open class AccountSupervisor(
             if (configs.transferNobleBalances) {
                 retrieveNobleBalance()
             }
+            if (configs.retrieveUserVault) {
+                retrieveUserVault()
+            }
         } else {
             userStatsTimer = null
             accountBalancesTimer = null
@@ -444,6 +457,28 @@ internal open class AccountSupervisor(
         helper.getOnChain(QueryType.GetStakingRewards, paramsInJson) { response ->
             val oldState = stateMachine.state
             update(stateMachine.onChainStakingRewards(response), oldState)
+        }
+    }
+
+    private fun retrieveUserVault() {
+        val timer = helper.ioImplementations.timer ?: CoroutineTimer.instance
+        userVaultTimer =
+            timer.schedule(0.0, userVaultPollingDuration) {
+                if (validatorConnected) {
+                    getUserVault()
+                    true
+                } else {
+                    false
+                }
+            }
+    }
+
+    private fun getUserVault() {
+        val params = iMapOf("address" to accountAddress)
+        val paramsInJson = helper.jsonEncoder.encode(params)
+        helper.getOnChain(QueryType.GetDelegations, paramsInJson) { response ->
+            val oldState = stateMachine.state
+            update(stateMachine.onUserVault(response), oldState)
         }
     }
 
