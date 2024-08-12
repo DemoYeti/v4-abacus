@@ -7,6 +7,8 @@ import exchange.dydx.abacus.output.EquityTiers
 import exchange.dydx.abacus.output.FeeTier
 import exchange.dydx.abacus.output.LaunchIncentivePoint
 import exchange.dydx.abacus.output.LaunchIncentiveSeason
+import exchange.dydx.abacus.output.MarketCandle
+import exchange.dydx.abacus.output.MarketOrderbook
 import exchange.dydx.abacus.output.MarketTrade
 import exchange.dydx.abacus.output.PerpetualMarket
 import exchange.dydx.abacus.output.WithdrawalGating
@@ -44,8 +46,33 @@ internal data class InternalMarketSummaryState(
 )
 
 internal data class InternalMarketState(
+    // recent trades
     var trades: List<MarketTrade>? = null,
+
+    // market details
     var perpetualMarket: PerpetualMarket? = null,
+
+    // raw orderbook
+    var rawOrderbook: InternalOrderbook? = null,
+
+    //  orderbook for trade calculations
+    var consolidatedOrderbook: InternalOrderbook? = null,
+
+    // grouped orderbook for app display
+    var groupedOrderbook: MarketOrderbook? = null,
+
+    // candles: resolution -> candles
+    var candles: MutableMap<String, List<MarketCandle>>? = null
+)
+
+internal data class InternalOrderbook(
+    val asks: List<InternalOrderbookTick>? = null,
+    val bids: List<InternalOrderbookTick>? = null,
+)
+
+internal data class InternalOrderbookTick(
+    val price: Double,
+    val size: Double,
 )
 
 internal data class InternalConfigsState(
