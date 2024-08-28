@@ -72,14 +72,12 @@ internal class TradeInputValidator(
             }
         }
 
-        val marketId = internalState.input.trade.marketId ?: return errors
-
         tradeValidationTracker.logValidationResult(
             TradeValidationPayload(
                 errors = errors.map { it.code },
-                marketId = marketId,
-                size = internalState.input.trade.size?.size,
-                notionalSize = internalState.input.trade.size?.usdcSize,
+                marketId = internalState.input.trade.marketId ?: return errors,
+                size = internalState.input.trade.size?.size ?: return errors,
+                notionalSize = internalState.input.trade.size?.usdcSize ?: return errors,
             ).apply {
                 indexSlippage = internalState.input.trade.summary?.indexSlippage
                 orderbookSlippage = internalState.input.trade.summary?.slippage
@@ -129,8 +127,8 @@ internal class TradeInputValidator(
                 TradeValidationPayload(
                     errors = errors.mapNotNull { (it as? Map<*, *>)?.get("code") as? String },
                     marketId = marketId,
-                    size = parser.asDouble(sizeParent?.get("size")),
-                    notionalSize = parser.asDouble(sizeParent?.get("usdcSize")),
+                    size = parser.asDouble(sizeParent?.get("size")) ?: return errors,
+                    notionalSize = parser.asDouble(sizeParent?.get("usdcSize")) ?: return errors,
                 ).apply {
                     indexSlippage = parser.asDouble(parser.asNativeMap(transaction.get("summary"))?.get("indexSlippage"))
                     orderbookSlippage = parser.asDouble(parser.asNativeMap(transaction.get("summary"))?.get("slippage"))

@@ -28,8 +28,8 @@ private val TrackingJson = Json {
 data class TradeValidationPayload(
     val errors: List<String> = emptyList(),
     val marketId: String,
-    val size: Double? = null,
-    val notionalSize: Double? = null,
+    val size: Double,
+    val notionalSize: Double,
 ) {
     // Fields declared in class body are still serialized, but are not used for data class equality.
     // Basically, don't want to emit more events if only slippage has changed (via orderbook)
